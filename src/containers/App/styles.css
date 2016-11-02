@@ -1,0 +1,16 @@
+.app {
+    position: relative;
+    height: 100%;
+    background-color: #fafafa;
+}
+
+.card {
+    border: 1px solid #cccccc;
+    background-color: #ffffff;
+    border-radius: 6px;
+    width: 300px;
+    height: 200px;
+    text-align: center;
+    line-height: 200px;
+}
+
