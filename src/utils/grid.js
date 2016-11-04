@@ -1,5 +1,5 @@
 
-import isEqual from 'lodash.isequal';
+import _ from 'lodash';
 import React from 'react';
 
 /**
@@ -7,12 +7,31 @@ import React from 'react';
  * This will catch differences in keys, order, and length.
  */
 export function childrenEqual(a, b) {
-    return isEqual(React.Children.map(a, c => c.key), React.Children.map(b, c => c.key));
+    return _.isEqual(React.Children.map(a, c => c.key), React.Children.map(b, c => c.key));
 }
 
 
 export const getLayoutItem = function( layout, id ) {
     return layout.find( item => item.id === id );  
+};
+
+export const collides = function( layoutItem1, layoutItem2 ) {
+    return !(
+        layoutItem1.id === layoutItem2.id ||
+        layoutItem1 === layoutItem2 ||
+        layoutItem1.x + layoutItem1.width <= layoutItem2.x ||
+        layoutItem1.x >= layoutItem2.x + layoutItem2.width ||
+        layoutItem1.y + layoutItem1.height <= layoutItem2.y ||
+        layoutItem1.y >= layoutItem2.y + layoutItem2.height
+    );
+};
+
+export const getFirstCollision = function( layout, layoutItem ) {
+    return layout.find( l => collides( l, layoutItem ) );
+};
+
+export const getAllCollisions = function( layout, layoutItem ) {
+    return layout.filter( l => collides( l, layoutItem ) );
 };
 
 /**
@@ -85,25 +104,6 @@ export const sortLayoutItemsByRowColumn = function( layout ) {
 
         return -1;
     });
-};
-
-export const getFirstCollision = function( layout, layoutItem ) {
-    return layout.find( l => collides( l, layoutItem ) );
-};
-
-export const getAllCollisions = function( layout, layoutItem ) {
-    return layout.filter( l => collides( l, layoutItem ) );
-};
-
-export const collides = function( layoutItem1, layoutItem2 ) {
-    return !(
-        layoutItem1.id === layoutItem2.id ||
-        layoutItem1 === layoutItem2 ||
-        layoutItem1.x + layoutItem1.width <= layoutItem2.x ||
-        layoutItem1.x >= layoutItem2.x + layoutItem2.width ||
-        layoutItem1.y + layoutItem1.height <= layoutItem2.y ||
-        layoutItem1.y >= layoutItem2.y + layoutItem2.height
-    );
 };
 
 /**

@@ -1,7 +1,6 @@
 import React, { Component, PropTypes } from 'react';
 import BoardManager from '../../components/BoardManager';
 import Board from '../../components/Board';
-import classNames from 'classnames';
 
 import './styles.css';
 
@@ -27,17 +26,13 @@ class Card extends Component {
     }
 }
 
-const breakpoints = {
-    large  : 1200,
-    medium : 768
-};
-
 const initialBoards = [
     {
         name   : 'A',
         layout : [
             { id: 'a-a', x: 0, y: 0, height: 4, width: 2},
-            { id: 'a-b', x: 2, y: 0, height: 4, width: 2}
+            { id: 'a-b', x: 2, y: 0, height: 4, width: 2},
+            { id: 'a-c', x: 6, y: 0, height: 4, width: 2, isHidden: true}
         ]
     },
     {
@@ -110,7 +105,7 @@ class App extends Component {
         
         return (
             <div className="app">
-                <BoardManager onCreateBoard={this.onCreateBoard} maxBoards={3}>
+                <BoardManager onCreateBoard={this.onCreateBoard} maxBoards={3} showHidden={true}>
                     {boards.map( board => (
                         <Board
                             key={board.name}

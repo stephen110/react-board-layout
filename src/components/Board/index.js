@@ -82,6 +82,7 @@ class Board extends Component {
 
         this.state = {
             activeDrag : null,
+            activeResize : null,
             oldDragItem : null,
             oldLayout : null
         };
@@ -106,7 +107,8 @@ class Board extends Component {
         if ( layoutItem ) {
             this.setState({
                 oldDragItem : { ...layoutItem },
-                oldLayout : [ ...layout ]
+                oldLayout   : [ ...layout ],
+                activeDrag  : layoutItem
             });
 
             this.props.onDragStart(
@@ -195,7 +197,8 @@ class Board extends Component {
 
         this.setState({
             oldResizeItem : { ...layoutItem },
-            oldLayout : [ ...layout ]
+            oldLayout     : [ ...layout ],
+            activeResize  : layoutItem
         });
 
         onResizeStart( layout, layoutItem, layoutItem, null, event, node );
@@ -230,6 +233,10 @@ class Board extends Component {
         layout = resizeElement( layout, layoutItem, width, height );
         onResize( layout, oldResizeItem, layoutItem, placeholder, event, node );
         onLayoutChange( layout, this );
+
+        this.setState({
+            activeResize : layoutItem
+        });
     }
 
     onResizeStop( id, width, height, { event, node } ) {
@@ -254,6 +261,7 @@ class Board extends Component {
         onLayoutChange( layout, this );
 
         this.setState({
+            activeResize : null,
             oldResizeItem : null,
             oldLayout : null
         });
@@ -290,9 +298,12 @@ class Board extends Component {
                 rows={rows}
                 useCSSTransforms={useCSSTransforms}
                 isDraggable={false}
-                isResizable={false}>
+                isResizable={false}
+                isHidden={false}>
                 <div>
-                    <div className="react-board-placeholder" />
+                    <div
+                        className="react-board-placeholder"
+                    />
                 </div>
             </BoardItem>
         );
@@ -338,6 +349,7 @@ class Board extends Component {
                 columns={columns}
                 cancel={draggableCancel}
                 handle={draggableHandle}
+                isHidden={layoutItem.isHidden}
                 isDraggable={draggable}
                 onDragStart={this.onDragStart}
                 onDrag={this.onDrag}
@@ -367,10 +379,19 @@ class Board extends Component {
             className,
             children,
             style,
-            parentHeight
+            parentHeight,
+            showHidden
         } = this.props;
 
-        const mergedClassName = classNames( 'react-board-layout', className );
+        const {
+            activeDrag,
+            activeResize
+        } = this.state;
+
+        const mergedClassName = classNames( 'react-board-layout', className, {
+            'show-hidden' : showHidden || activeDrag || activeResize
+        });
+
         const mergedStyle = {
             height : `${parentHeight}px`,
             ...style

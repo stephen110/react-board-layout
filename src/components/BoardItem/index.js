@@ -5,8 +5,7 @@ import { Resizable } from 'react-resizable';
 import classNames from 'classnames';
 import { setTransform, setTopLeft } from '../../utils/style';
 import { childrenEqual, shallowEqual } from '../../utils/grid';
-import isEqual from 'lodash.isequal';
-import omit from 'lodash.omit';
+import _ from 'lodash';
 import './styles.css';
 
 const {
@@ -46,6 +45,7 @@ class BoardItem extends Component {
         useCSSTransforms : bool.isRequired,
         isDraggable : bool.isRequired,
         isResizable : bool.isRequired,
+        isHidden : bool.isRequired,
 
         // Callbacks
         onDragStart : func,
@@ -66,7 +66,8 @@ class BoardItem extends Component {
         minWidth  : 0,
         maxWidth  : Infinity,
         minHeight : 0,
-        maxHeight : Infinity
+        maxHeight : Infinity,
+        isHidden  : false
     };
 
     constructor( props, context ) {
@@ -92,8 +93,8 @@ class BoardItem extends Component {
             return true;
         }
 
-        const nextPropsClean = omit( nextProps, 'children' );
-        const propsClean = omit( this.props, 'children' );
+        const nextPropsClean = _.omit( nextProps, 'children' );
+        const propsClean = _.omit( this.props, 'children' );
 
         return (
             !shallowEqual( nextPropsClean, propsClean ) ||
@@ -182,7 +183,7 @@ class BoardItem extends Component {
         };
     }
 
-    calculatePosition(x, y, width, height, dragging ) {
+    calculatePosition(x, y, width, height ) {
         const {
             parentWidth,
             parentHeight,
@@ -227,8 +228,6 @@ class BoardItem extends Component {
         const clientRect = node.getBoundingClientRect();
         nextPosition.left = clientRect.left - parentRect.left;
         nextPosition.top = clientRect.top - parentRect.top;
-
-        console.log( this.instanceId, nextPosition );
 
         this.setState({
             dragging: nextPosition
@@ -408,12 +407,19 @@ class BoardItem extends Component {
             cancelSelector.push( cancel );
         }
 
+        const handleSelector = [];
+
+        if ( handle ) {
+            handleSelector.push( handle );
+            handleSelector.push( '.react-board-item-placeholder' );
+        }
+
         return (
             <Draggable
                 onStart={this.onDragStart}
                 onDrag={this.onDrag}
                 onStop={this.onDragStop}
-                handle={handle}
+                handle={handleSelector.join( ',' )}
                 cancel={cancelSelector.join( ',' )}
                 bounds="parent"
                 position={{x : position.left, y: position.top}}>
@@ -448,8 +454,6 @@ class BoardItem extends Component {
             Math.min( calculatedMax.height, absoluteMax.height )
         ];
 
-        console.log( position );
-
         return (
             <Resizable
                 width={position.width}
@@ -464,6 +468,23 @@ class BoardItem extends Component {
         );
     }
 
+    renderPlaceholder() {
+        const {
+            id
+        } = this.props;
+
+        return (
+            <div>
+                <div className="react-board-item-placeholder">
+                    <div className="placeholder__title">
+                        <div className="title__text">{id}</div>
+                        <div>(Hidden)</div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     render() {
         const {
             x,
@@ -475,7 +496,8 @@ class BoardItem extends Component {
             useCSSTransforms,
             children,
             className,
-            style
+            style,
+            isHidden
         } = this.props;
 
         const {
@@ -483,14 +505,15 @@ class BoardItem extends Component {
             resizing
         } = this.state;
 
-        const child = React.Children.only( children );
+        const child = isHidden ? this.renderPlaceholder() : React.Children.only( children );
         const position = this.calculatePosition( x, y, width, height, dragging );
 
         const mergedClassName = classNames( 'react-board-item', className, child.props.className, {
             'react-board-item' : true,
             'css-transforms'   : useCSSTransforms,
             'resizing'         : !!resizing,
-            'dragging'         : !!dragging
+            'dragging'         : !!dragging,
+            'hidden'           : isHidden
         });
 
         const mergedStyle = {

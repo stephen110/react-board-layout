@@ -5,15 +5,20 @@ import classNames from 'classnames';
 import './styles.css';
 
 const {
-    number,
-    object
+    bool,
+    number
 } = PropTypes;
 
 class BoardManager extends Component {
 
     static propTypes = {
         maxBoards : number,
-        breakpoints : object
+        showHidden : bool
+    };
+
+    static defaultProps = {
+        maxBoards   : Infinity,
+        showHidden  : false
     };
 
     constructor( props, context ) {
@@ -62,7 +67,8 @@ class BoardManager extends Component {
     render() {
         const {
             children,
-            maxBoards
+            maxBoards,
+            showHidden
         } = this.props;
 
         const {
@@ -134,6 +140,7 @@ class BoardManager extends Component {
 
                         return React.cloneElement( child, {
                             boardManager : this,
+                            showHidden,
                             active,
                             style,
                             height,
