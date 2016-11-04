@@ -5,13 +5,15 @@ import classNames from 'classnames';
 import './styles.css';
 
 const {
-    number
+    number,
+    object
 } = PropTypes;
 
 class BoardManager extends Component {
 
     static propTypes = {
-        maxBoards : number
+        maxBoards : number,
+        breakpoints : object
     };
 
     constructor( props, context ) {
@@ -106,6 +108,11 @@ class BoardManager extends Component {
                         notifyOnMount={true}
                     />
                     {React.Children.map( children, ( child, index ) => {
+                        // Will occur on first render, prior to NotifyResize mounting
+                        if ( !height || !width ) {
+                            return null;
+                        }
+
                         const active = index === selectedIndex;
                         let style = {};
 
@@ -128,7 +135,11 @@ class BoardManager extends Component {
                         return React.cloneElement( child, {
                             boardManager : this,
                             active,
-                            style
+                            style,
+                            height,
+                            width,
+                            columns : 12,
+                            rows : 12
                         });
                     })}
                 </div>

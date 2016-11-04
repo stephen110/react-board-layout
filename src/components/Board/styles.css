@@ -1,3 +1,5 @@
-.board {
+
+.react-board-layout {
     position: relative;
+    transition: height 200ms ease;
 }

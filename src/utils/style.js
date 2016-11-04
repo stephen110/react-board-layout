@@ -10,7 +10,7 @@ export const setTopLeft = function( { top, left, width, height } ) {
 };
 
 export const setTransform = function( { top, left, width, height } ) {
-    const translate = `translate(${left}px, ${top}px`;
+    const translate = `translate(${left}px, ${top}px)`;
 
     return {
         transform : translate,

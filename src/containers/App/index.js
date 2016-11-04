@@ -1,7 +1,7 @@
 import React, { Component, PropTypes } from 'react';
-import Draggable from 'react-draggable';
 import BoardManager from '../../components/BoardManager';
 import Board from '../../components/Board';
+import classNames from 'classnames';
 
 import './styles.css';
 
@@ -19,47 +19,32 @@ class Card extends Component {
             text
         } = this.props;
 
-        const style = {
-            opacity: 1 //isDragging ? 0.5 : 1
-        };
-
-        const eventLogger = ( event, data ) => {
-            console.log('Event: ', event);
-            console.log('Data: ', data);
-        };
-
         return (
-            <Draggable
-                handle=".handle"
-                defaultPosition={{x: 0, y: 0}}
-                position={null}
-                grid={[25, 25]}
-                zIndex={100}
-                bounds="parent"
-                onStart={eventLogger}
-                onDrag={eventLogger}
-                onStop={eventLogger}>
-                <div className="card">
-                    <div className="handle">{text}</div>
-                </div>
-            </Draggable>
+            <div className="card">
+                <div className="title">{text}</div>
+            </div>
         );
     }
 }
 
+const breakpoints = {
+    large  : 1200,
+    medium : 768
+};
+
 const initialBoards = [
     {
-        name : 'A',
-        cards : [
-            'Board A - Card A',
-            'Board A - Card B'
+        name   : 'A',
+        layout : [
+            { id: 'a-a', x: 0, y: 0, height: 4, width: 2},
+            { id: 'a-b', x: 2, y: 0, height: 4, width: 2}
         ]
     },
     {
-        name : 'B',
-        cards : [
-            'Board B - Card A',
-            'Board B - Card B'
+        name   : 'B',
+        layout : [
+            { id: 'b-a', x: 0, y: 0, height: 2, width: 2},
+            { id: 'b-b', x: 4, y: 0, height: 2, width: 2}
         ]
     }
 ];
@@ -68,10 +53,34 @@ class App extends Component {
     
     constructor( props, context ) {
         super( props, context );
-        this.onCreateBoard = this.onCreateBoard.bind( this );
+        this.onCreateBoard  = this.onCreateBoard.bind( this );
+        this.onLayoutChange = this.onLayoutChange.bind( this );
         this.state = {
             boards : initialBoards
         };
+    }
+
+    onLayoutChange( nextLayout, board ) {
+        let {
+            boards
+        } = this.state;
+
+        boards = [].concat( boards );
+
+        const nextBoard = boards.find( b => board.props.name === b.name );
+
+        if ( nextBoard ) {
+            const index = boards.indexOf( nextBoard );
+
+            boards[ index ] = {
+                name   : nextBoard.name,
+                layout : nextLayout
+            };
+
+            this.setState({
+                boards
+            });
+        }
     }
     
     onCreateBoard() {
@@ -103,9 +112,20 @@ class App extends Component {
             <div className="app">
                 <BoardManager onCreateBoard={this.onCreateBoard} maxBoards={3}>
                     {boards.map( board => (
-                        <Board name={board.name}>
-                            {board.cards.map( card => (
-                                <Card text={card} />
+                        <Board
+                            key={board.name}
+                            name={board.name}
+                            layout={board.layout}
+                            isDraggable={true}
+                            useCSSTransforms={true}
+                            onLayoutChange={this.onLayoutChange}
+                            draggableHandle=".title">
+                            {board.layout.map( card => (
+                                <div key={card.id}>
+                                    <Card
+                                        text={card.id}
+                                    />
+                                </div>
                             ))}
                         </Board>
                     ))}
