@@ -122,31 +122,33 @@ class App extends Component {
         } = this.state;
         
         return (
-            <div className="app">
-                <BoardSet
-                    boardLayouts={boardLayouts}
-                    onCreateBoard={this.onCreateBoard}
-                    onBoardLayoutsChange={this.onBoardLayoutsChange}
-                    maxBoards={3}
-                    showHidden={true}>
-                    {boardOrder.map( key => {
-                        const layout = boardLayouts[ key ] || [];
+            <div className="wrapper">
+                <div className="app">
+                    <BoardSet
+                        boardLayouts={boardLayouts}
+                        onCreateBoard={this.onCreateBoard}
+                        onBoardLayoutsChange={this.onBoardLayoutsChange}
+                        maxBoards={3}
+                        showHidden={true}>
+                        {boardOrder.map( key => {
+                            const layout = boardLayouts[ key ] || [];
 
-                        return (
-                            <Board
-                                key={key}
-                                name={key}
-                                layout={layout}>
-                                {layout.map( card => (
-                                    <Card
-                                        key={card.id}
-                                        text={card.id}
-                                    />
-                                ))}
-                            </Board>
-                        );
-                    })}
-                </BoardSet>
+                            return (
+                                <Board
+                                    key={key}
+                                    name={key}
+                                    layout={layout}>
+                                    {layout.map( card => (
+                                        <Card
+                                            key={card.id}
+                                            text={card.id}
+                                        />
+                                    ))}
+                                </Board>
+                            );
+                        })}
+                    </BoardSet>
+                </div>
             </div>
         );
     }

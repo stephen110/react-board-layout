@@ -21,3 +21,9 @@
     margin: 0 10px;
     cursor: move;
 }
+
+.wrapper {
+    position: relative;
+    height: 100%;
+    padding: 50px 10px 0 200px;
+}

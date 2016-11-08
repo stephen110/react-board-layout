@@ -10,7 +10,6 @@ export function childrenEqual(a, b) {
     return _.isEqual(React.Children.map(a, c => c.key), React.Children.map(b, c => c.key));
 }
 
-
 export const getLayoutItem = function( layout, id ) {
     return layout.find( item => item.id === id );  
 };
@@ -76,67 +75,6 @@ export const setLayoutItemBounds = function( layoutItem, { x, y, height, width }
         height,
         width
     };
-};
-
-/**
- *  Checks against collisions when moving the element
- */
-export const moveElement = function( layout, layoutItem, x, y ) {
-    if ( layoutItem.isStatic ) {
-        return layout;
-    }
-
-    if ( layoutItem.x === x && layoutItem.y === y ) {
-        return layout;
-    }
-
-    const nextLayoutItem = {
-        id      : layoutItem.id,
-        x       : typeof x === 'number' ? x : layoutItem.x,
-        y       : typeof y === 'number' ? y : layoutItem.y,
-        height  : layoutItem.height,
-        width   : layoutItem.width
-    };
-
-    if ( getFirstCollision( layout, nextLayoutItem ) ) {
-        return layout;
-    }
-
-    layoutItem.moved = true;
-    layoutItem.x = nextLayoutItem.x;
-    layoutItem.y = nextLayoutItem.y;
-
-    return layout;
-};
-
-/**
- * Checks against collisions when resizing the element
- */
-export const resizeElement = function( layout, layoutItem, width, height ) {
-    if ( layoutItem.isStatic ) {
-        return layout;
-    }
-
-    if ( layoutItem.height === height && layoutItem.width === width ) {
-        return layout;
-    }
-
-    const nextLayoutItem = {
-        id : layoutItem.id,
-        x  : layoutItem.x,
-        y  : layoutItem.y,
-        height,
-        width
-    };
-
-    if ( getFirstCollision( layout, nextLayoutItem ) ) {
-        return layout;
-    }
-
-    layoutItem.width = width;
-    layoutItem.height = height;
-
-    return layout;
 };
 
 /**

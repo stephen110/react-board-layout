@@ -1,5 +1,6 @@
 
 import React, { Component, PropTypes } from 'react';
+import { findDOMNode } from 'react-dom';
 import classNames from 'classnames';
 import BoardItem from '../BoardItem';
 import { DropTarget } from 'react-dnd';
@@ -290,7 +291,13 @@ const boardTarget = {
         this.y = clientOffset.y;
 
         if ( type === BOARD_ITEM ) {
-            const nextXY = calculateXY( clientOffset.y, clientOffset.x, item.height, item.width, props.columns, props.rows, props.height, props.width );
+            const parentNode = findDOMNode( component );
+            const parentBounds = parentNode.getBoundingClientRect();
+
+            const x = clientOffset.x - parentBounds.left;
+            const y = clientOffset.y - parentBounds.top;
+
+            const nextXY = calculateXY( y, x, item.height, item.width, props.columns, props.rows, props.height, props.width );
 
             if ( item.x !== nextXY.x && item.y !== nextXY.y ) {
                 component.onDrag( item.id, nextXY.x, nextXY.y );
