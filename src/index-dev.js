@@ -1,3 +1,3 @@
 
-module.exports.BoardManager = require( './components/BoardManager' ).default;
-module.exports.Board = require( './components/Board' ).default;
+module.exports.BoardSet = require( './components/BoardSet' ).default;
+module.exports.Board    = require( './components/Board' ).default;

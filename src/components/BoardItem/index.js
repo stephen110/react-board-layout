@@ -1,10 +1,11 @@
 
 import React, { Component, PropTypes } from 'react';
-import Draggable from 'react-draggable';
 import { Resizable } from 'react-resizable';
 import classNames from 'classnames';
 import { setTransform, setTopLeft } from '../../utils/style';
 import { childrenEqual, shallowEqual } from '../../utils/grid';
+import { DragSource } from 'react-dnd';
+import { BOARD_ITEM } from '../../constants';
 import _ from 'lodash';
 import './styles.css';
 
@@ -49,7 +50,6 @@ class BoardItem extends Component {
 
         // Callbacks
         onDragStart : func,
-        onDrag : func,
         onDragStop : func,
         onResizeStart : func,
         onResize : func,
@@ -57,9 +57,10 @@ class BoardItem extends Component {
 
         className : string,
 
-        // react-draggable
-        handle : string,
-        cancel : string
+        // react-dnd
+        connectDragSource: func,
+        connectDragPreview : func,
+        isDragging: bool
     };
 
     static defaultProps = {
@@ -73,19 +74,13 @@ class BoardItem extends Component {
     constructor( props, context ) {
         super( props, context );
 
-        this.mixinDraggable = this.mixinDraggable.bind( this );
-        this.onDragStart    = this.onDragStart.bind( this );
-        this.onDrag         = this.onDrag.bind( this );
-        this.onDragStop     = this.onDragStop.bind( this );
         this.onResizeStart  = this.onResizeStart.bind( this );
         this.onResize       = this.onResize.bind( this );
         this.onResizeStop   = this.onResizeStop.bind( this );
+        this.calculateXY    = this.calculateXY.bind( this );
 
         this.instanceId = instanceCount++;
-
-        this.state = {
-            dragging : null
-        };
+        this.state = {};
     }
 
     shouldComponentUpdate( nextProps, nextState ) {
@@ -102,7 +97,7 @@ class BoardItem extends Component {
         );
     }
 
-    calculateXY(top, left) {
+    calculateXY( top, left ) {
         const {
             columns,
             rows,
@@ -214,106 +209,6 @@ class BoardItem extends Component {
         return setTopLeft( position );
     }
 
-    onDragStart( event, data ) {
-        const {
-            id
-        } = this.props;
-
-        const {
-            node
-        } = data;
-
-        const nextPosition = { top: 0, left: 0 };
-        const parentRect = node.offsetParent.getBoundingClientRect();
-        const clientRect = node.getBoundingClientRect();
-        nextPosition.left = clientRect.left - parentRect.left;
-        nextPosition.top = clientRect.top - parentRect.top;
-
-        this.setState({
-            dragging: nextPosition
-        });
-
-        const { x, y } = this.calculateXY(
-            nextPosition.top,
-            nextPosition.left
-        );
-
-        this.props.onDragStart( id, x, y, {
-            event,
-            node,
-            nextPosition
-        });
-    }
-
-    onDrag( event, data ) {
-        const {
-            id
-        } = this.props;
-
-        const {
-            node,
-            deltaX,
-            deltaY
-        } = data;
-
-        if ( !this.state.dragging ) {
-            throw new Error( 'onDrag called before onDragStart.' );
-        }
-
-        const nextPosition = { top: 0, left: 0 };
-        nextPosition.left = this.state.dragging.left + deltaX;
-        nextPosition.top = this.state.dragging.top + deltaY;
-        console.log( this.instanceId, nextPosition );
-
-        this.setState({
-            dragging: nextPosition
-        });
-
-        const { x, y } = this.calculateXY(
-            nextPosition.top,
-            nextPosition.left
-        );
-
-        this.props.onDrag( id, x, y, {
-            event,
-            node,
-            nextPosition
-        });
-    }
-
-    onDragStop( event, data ) {
-        const {
-            id
-        } = this.props;
-
-        const {
-            node
-        } = data;
-
-        if ( !this.state.dragging ) {
-            throw new Error('onDragEnd called before onDragStart.');
-        }
-
-        const nextPosition = { top: 0, left: 0 };
-        nextPosition.left = this.state.dragging.left;
-        nextPosition.top = this.state.dragging.top;
-
-        const { x, y } = this.calculateXY(
-            nextPosition.top,
-            nextPosition.left
-        );
-
-        this.props.onDragStop( id, x, y, {
-            event,
-            node,
-            nextPosition
-        });
-
-        this.setState({
-            dragging: null
-        });
-    }
-
     onResizeStart( event, data ) {
         const {
             id,
@@ -395,39 +290,6 @@ class BoardItem extends Component {
         });
     }
 
-    mixinDraggable( child, position ) {
-        const {
-            handle,
-            cancel
-        } = this.props;
-
-        const cancelSelector  = [ '.react-resizable-handle' ];
-
-        if ( cancel ) {
-            cancelSelector.push( cancel );
-        }
-
-        const handleSelector = [];
-
-        if ( handle ) {
-            handleSelector.push( handle );
-            handleSelector.push( '.react-board-item-placeholder' );
-        }
-
-        return (
-            <Draggable
-                onStart={this.onDragStart}
-                onDrag={this.onDrag}
-                onStop={this.onDragStop}
-                handle={handleSelector.join( ',' )}
-                cancel={cancelSelector.join( ',' )}
-                bounds="parent"
-                position={{x : position.left, y: position.top}}>
-                {child}
-            </Draggable>
-        );
-    }
-
     mixinResizable( child, position ) {
         const {
             x,
@@ -470,16 +332,20 @@ class BoardItem extends Component {
 
     renderPlaceholder() {
         const {
-            id
+            id,
+            isDragging,
+            connectDragSource
         } = this.props;
 
-        return (
-            <div>
-                <div className="react-board-item-placeholder">
-                    <div className="placeholder__title">
-                        <div className="title__text">{id}</div>
-                        <div>(Hidden)</div>
-                    </div>
+        if ( isDragging ) {
+            return null;
+        }
+
+        return connectDragSource(
+            <div className="react-board-item-placeholder">
+                <div className="placeholder__title">
+                    <div className="title__text">{id}</div>
+                    <div>(Hidden)</div>
                 </div>
             </div>
         );
@@ -497,7 +363,10 @@ class BoardItem extends Component {
             children,
             className,
             style,
-            isHidden
+            isHidden,
+            isDragging,
+            connectDragSource,
+            connectDragPreview
         } = this.props;
 
         const {
@@ -505,38 +374,54 @@ class BoardItem extends Component {
             resizing
         } = this.state;
 
-        const child = isHidden ? this.renderPlaceholder() : React.Children.only( children );
-        const position = this.calculatePosition( x, y, width, height, dragging );
+        const child      = isHidden ? this.renderPlaceholder() : React.Children.only( children );
+        const childProps = child ? child.props : {};
+        const position   = this.calculatePosition( x, y, width, height, dragging );
 
-        const mergedClassName = classNames( 'react-board-item', className, child.props.className, {
-            'react-board-item' : true,
-            'css-transforms'   : useCSSTransforms,
-            'resizing'         : !!resizing,
-            'dragging'         : !!dragging,
-            'hidden'           : isHidden
+        const childClassName  = childProps.className;
+        const mergedClassName = classNames( 'react-board-item', className, {
+            'css-transforms' : useCSSTransforms,
+            'resizing' : !!resizing,
+            'dragging' : isDragging,
+            'hidden' : isHidden,
+            [childClassName] : childClassName && !isHidden
         });
 
         const mergedStyle = {
             ...style,
-            ...child.props.style,
+            ...childProps.style,
             ...this.createStyle( position )
         };
 
-        // Create the child element, modifying className and style
-        let nextChild = React.cloneElement( child, {
-            className : mergedClassName,
-            style : mergedStyle
-        });
+        let nextChildProps = {};
+
+        if ( child && typeof child.type !== 'string' ) {
+            nextChildProps = {
+                connectDragSource,
+                isDraggable,
+                isResizable,
+                isDragging,
+                height,
+                width,
+                x,
+                y
+            };
+        }
+
+        let nextChild = (
+            <div
+                style={mergedStyle}
+                className={mergedClassName}>
+                {child ? React.cloneElement( child, nextChildProps ) : null}
+            </div>
+        );
+
+        if ( isDraggable ) {
+            nextChild = connectDragPreview( nextChild );
+        }
 
         if ( isResizable ) {
             nextChild = this.mixinResizable(
-                nextChild,
-                position
-            );
-        }
-
-        if ( isDraggable ) {
-            nextChild = this.mixinDraggable(
                 nextChild,
                 position
             );
@@ -547,4 +432,51 @@ class BoardItem extends Component {
 
 }
 
-export default BoardItem;
+const boardItemSource = {
+
+    beginDrag : function( props, monitor, component ) {
+        const {
+            id,
+            onDragStart
+        } = props;
+
+        const {
+            calculateXY
+        } = component;
+
+        onDragStart( id );
+
+        return {
+            id,
+            calculateXY
+        };
+    },
+
+    endDrag: function( props, monitor ) {
+        console.log( 'Ending Drag', props.id );
+
+        const {
+            id,
+            onDragStop
+        } = props;
+
+        if ( !monitor.didDrop() ) {
+            onDragStop( id );
+        }
+    }
+
+};
+
+const collect = function( connect, monitor ) {
+    return {
+        connectDragPreview : connect.dragPreview(),
+        connectDragSource : connect.dragSource(),
+        isDragging : monitor.isDragging()
+    };
+};
+
+export default DragSource(
+    BOARD_ITEM,
+    boardItemSource,
+    collect
+)( BoardItem );

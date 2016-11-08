@@ -2,7 +2,9 @@
 import React, { Component, PropTypes } from 'react';
 import classNames from 'classnames';
 import BoardItem from '../BoardItem';
-import { getLayoutItem, moveElement, resizeElement } from '../../utils/grid';
+import { DropTarget } from 'react-dnd';
+import { getLayoutItem, moveElement, resizeElement, canMoveElement } from '../../utils/grid';
+import { BOARD_ITEM } from '../../constants';
 import './styles.css';
 
 const {
@@ -19,6 +21,7 @@ const noop = function(){};
 class Board extends Component {
 
     static propTypes = {
+        name : string.isRequired,
         className : string,
         style : object,
 
@@ -34,185 +37,119 @@ class Board extends Component {
         isResizable : bool,
         useCSSTransforms : bool,
 
-        onDragStart : func,
-        onDrag : func,
-        onDragStop : func,
-        onResizeStart : func,
-        onResize : func,
-        onResizeStop : func,
-
         // Layout
         layout : arrayOf( object ).isRequired,
 
         // Callbacks
-        onLayoutChange : func
+        onLayoutChange : func,
+        setWorkingItem : func,
+
+        updateItemPosition : func
     };
 
     static childContextTypes = {
-        board : object,
-        getBoardElement : func
+        board : object
     };
 
     static defaultProps = {
         columns : 12,
         rows    : 12,
-        layout  : [],
         isDraggable : true,
         isResizable : true,
         useCSSTransforms : true,
         onLayoutChange : noop,
-        onDragStart : noop,
-        onDrag : noop,
-        onDragStop : noop,
-        onResizeStart : noop,
-        onResize : noop,
-        onResizeStop : noop
+        setWorkingItem : noop
     };
 
     constructor( props, context ) {
         super(props, context);
-
         this.renderBoardItem = this.renderBoardItem.bind(this);
         this.onDragStart     = this.onDragStart.bind( this );
         this.onDrag          = this.onDrag.bind( this );
         this.onDragStop      = this.onDragStop.bind( this );
-        this.onResizeStart  = this.onResizeStart.bind( this );
-        this.onResize       = this.onResize.bind( this );
-        this.onResizeStop   = this.onResizeStop.bind( this );
-
-        this.state = {
-            activeDrag : null,
-            activeResize : null,
-            oldDragItem : null,
-            oldLayout : null
-        };
+        this.onResizeStart   = this.onResizeStart.bind( this );
+        this.onResize        = this.onResize.bind( this );
+        this.onResizeStop    = this.onResizeStop.bind( this );
     }
 
     getChildContext() {
         return {
-            board : this,
-            getBoardElement : () => {
-                return this.refs.element;
-            }
+            board : this
         };
     }
 
-    onDragStart( id, x, y, { event, node }) {
-        const {
-            layout
-        } = this.props;
+    onDragStart( id ) {}
 
-        const layoutItem = getLayoutItem( layout, id );
-
-        if ( layoutItem ) {
-            this.setState({
-                oldDragItem : { ...layoutItem },
-                oldLayout   : [ ...layout ],
-                activeDrag  : layoutItem
-            });
-
-            this.props.onDragStart(
-                layout,
-                layoutItem,
-                layoutItem,
-                null,
-                event,
-                node
-            );
-        }
-    }
-
-    onDrag( id, x, y, { event, node } ) {
-        const {
-            oldDragItem
-        } = this.state;
-
+    onDrag( id, x, y ) {
         let {
             layout,
-            onLayoutChange,
-            onDrag
+            setWorkingItem,
+            workingItem
         } = this.props;
 
-        const layoutItem = getLayoutItem( layout, id );
+        let layoutItem = getLayoutItem( layout, id );
 
         if ( !layoutItem ) {
-            return;
-        }
-
-        layout = moveElement( layout, layoutItem, x, y, true );
-        onDrag( layout, oldDragItem, layoutItem, event, node );
-        onLayoutChange( layout, this );
-
-        this.setState({
-            activeDrag : {
-                id      : layoutItem.id,
-                x       : layoutItem.x,
-                y       : layoutItem.y,
-                height  : layoutItem.height,
-                width   : layoutItem.width,
-                placeholder : true
+            if ( !workingItem ) {
+                return;
             }
-        });
+
+            // New item to this board
+            layoutItem = workingItem;
+        }
+
+        const nextLayoutItem = {
+            height : layoutItem.height,
+            width : layoutItem.width,
+            x,
+            y
+        };
+
+        if ( !canMoveElement( id, nextLayoutItem, layout ) ) {
+            return;
+        }
+
+        nextLayoutItem.id = id;
+        nextLayoutItem.placeholder = true;
+        setWorkingItem( nextLayoutItem );
     }
 
-    onDragStop( id, x, y, { event, node } ) {
-        const {
-            oldDragItem
-        } = this.state;
-
+    onDragStop( id, x, y ) {
         let {
+            setWorkingItem,
+            workingItem,
+            updateItemPosition
+        } = this.props;
+
+        if ( !workingItem ) {
+            return;
+        }
+
+        updateItemPosition( id, workingItem );
+        setWorkingItem( null );
+    }
+
+    onResizeStart( id ) {
+        const {
+            layout,
+            setWorkingItem
+        } = this.props;
+
+        const layoutItem = getLayoutItem( layout, id );
+
+        if ( !layoutItem ) {
+            return;
+        }
+
+        setWorkingItem( layoutItem );
+    }
+
+    onResize( id, width, height ) {
+        let {
+            name,
             layout,
             onLayoutChange,
-            onDragStop
-        } = this.props;
-
-        const layoutItem = getLayoutItem( layout, id );
-
-        if ( !layoutItem ) {
-            return;
-        }
-
-        this.setState({
-            activeDrag  : null,
-            oldDragItem : null,
-            oldLayout   : null
-        });
-
-        layout = moveElement( layout, layoutItem, x, y, true );
-        onDragStop( layout, oldDragItem, layoutItem, null, event, node );
-        onLayoutChange( layout, this );
-    }
-
-    onResizeStart( id, width, height, { event, node } ) {
-        const {
-            layout,
-            onResizeStart
-        } = this.props;
-
-        const layoutItem = getLayoutItem( layout, id );
-
-        if ( !layoutItem ) {
-            return;
-        }
-
-        this.setState({
-            oldResizeItem : { ...layoutItem },
-            oldLayout     : [ ...layout ],
-            activeResize  : layoutItem
-        });
-
-        onResizeStart( layout, layoutItem, layoutItem, null, event, node );
-    }
-
-    onResize( id, width, height, { event, node } ) {
-        const {
-            oldResizeItem
-        } = this.state;
-
-        let {
-            layout,
-            onResize,
-            onLayoutChange
+            setWorkingItem
         } = this.props;
 
         const layoutItem = getLayoutItem( layout, id );
@@ -231,23 +168,16 @@ class Board extends Component {
         };
 
         layout = resizeElement( layout, layoutItem, width, height );
-        onResize( layout, oldResizeItem, layoutItem, placeholder, event, node );
-        onLayoutChange( layout, this );
-
-        this.setState({
-            activeResize : layoutItem
-        });
+        onLayoutChange( name, layout );
+        setWorkingItem( placeholder );
     }
 
-    onResizeStop( id, width, height, { event, node } ) {
-        const {
-            oldResizeItem
-        } = this.state;
-
+    onResizeStop( id, width, height ) {
         let {
+            name,
             layout,
-            onResizeStop,
-            onLayoutChange
+            onLayoutChange,
+            setWorkingItem
         } = this.props;
 
         const layoutItem = getLayoutItem( layout, id );
@@ -257,41 +187,31 @@ class Board extends Component {
         }
 
         layout = resizeElement( layout, layoutItem, width, height );
-        onResizeStop( layout, oldResizeItem, layoutItem, null, event, node );
-        onLayoutChange( layout, this );
-
-        this.setState({
-            activeResize : null,
-            oldResizeItem : null,
-            oldLayout : null
-        });
+        onLayoutChange( name, layout );
+        setWorkingItem( null );
     }
-
 
     renderPlaceholder() {
         const {
-            activeDrag
-        } = this.state;
-
-        if ( !activeDrag ) {
-            return null;
-        }
-
-        const {
+            useCSSTransforms,
+            workingItem,
             width,
             height,
             columns,
-            rows,
-            useCSSTransforms
+            rows
         } = this.props;
+
+        if ( !workingItem ) {
+            return null;
+        }
 
         return (
             <BoardItem
-                id={activeDrag.id}
-                x={activeDrag.x}
-                y={activeDrag.y}
-                height={activeDrag.height}
-                width={activeDrag.width}
+                id={workingItem.id}
+                x={workingItem.x}
+                y={workingItem.y}
+                height={workingItem.height}
+                width={workingItem.width}
                 parentWidth={width}
                 parentHeight={height}
                 columns={columns}
@@ -300,10 +220,8 @@ class Board extends Component {
                 isDraggable={false}
                 isResizable={false}
                 isHidden={false}>
-                <div>
-                    <div
-                        className="react-board-placeholder"
-                    />
+                <div className="react-board-placeholder-container">
+                    <div className="react-board-placeholder" />
                 </div>
             </BoardItem>
         );
@@ -352,7 +270,6 @@ class Board extends Component {
                 isHidden={layoutItem.isHidden}
                 isDraggable={draggable}
                 onDragStart={this.onDragStart}
-                onDrag={this.onDrag}
                 onDragStop={this.onDragStop}
                 isResizable={resizable}
                 onResizeStart={this.onResizeStart}
@@ -380,16 +297,13 @@ class Board extends Component {
             children,
             style,
             parentHeight,
-            showHidden
+            showHidden,
+            connectDropTarget,
+            workingItem
         } = this.props;
 
-        const {
-            activeDrag,
-            activeResize
-        } = this.state;
-
         const mergedClassName = classNames( 'react-board-layout', className, {
-            'show-hidden' : showHidden || activeDrag || activeResize
+            'show-hidden' : showHidden || workingItem
         });
 
         const mergedStyle = {
@@ -397,9 +311,8 @@ class Board extends Component {
             ...style
         };
 
-        return (
+        return connectDropTarget(
             <div
-                ref="element"
                 className={mergedClassName}
                 style={mergedStyle}>
                 {React.Children.map(children, this.renderBoardItem)}
@@ -410,4 +323,52 @@ class Board extends Component {
     
 }
 
-export default Board;
+const boardTarget = {
+
+    hover : function( props, monitor, component ) {
+        const item = monitor.getItem();
+        const clientOffset = monitor.getSourceClientOffset();
+
+        const {
+            calculateXY
+        } = item;
+
+        if ( clientOffset.x !== this.x || clientOffset.y !== this.y ) {
+            const { x, y } = calculateXY( clientOffset.y, clientOffset.x );
+
+            if ( item.x !== x && item.y !== y ) {
+                component.onDrag( item.id, x, y, {} );
+            }
+
+            this.x = clientOffset.x;
+            this.y = clientOffset.y;
+        }
+    },
+
+    drop : function( props, monitor, component ) {
+        this.x = null;
+        this.y = null;
+
+        const item = monitor.getItem();
+        const clientOffset = monitor.getSourceClientOffset();
+
+        const { calculateXY } = item;
+        const { x, y } = calculateXY( clientOffset.y, clientOffset.x, item );
+
+        component.onDragStop( item.id, x, y );
+    }
+
+};
+
+const collect = function( connect, monitor ) {
+    return {
+        connectDropTarget : connect.dropTarget(),
+        isOver : monitor.isOver()
+    };
+};
+
+export default DropTarget(
+    BOARD_ITEM,
+    boardTarget,
+    collect
+)( Board );

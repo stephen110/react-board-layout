@@ -1,4 +1,9 @@
 .react-board-layout {
-    position: relative;
-    transition: height 200ms ease;
+    position: absolute;
+    transition: height 300ms ease;
+    transition-property: transform;
+}
+
+.react-board-item.css-transforms {
+    transition-property: transform;
 }

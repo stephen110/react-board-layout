@@ -22,6 +22,8 @@
     "lodash.isequal": "^4.4.0",
     "lodash.omit": "^4.5.0",
     "react": "^15.3.2",
+    "react-dnd": "^2.1.4",
+    "react-dnd-html5-backend": "^2.1.2",
     "react-dom": "^15.3.2",
     "react-draggable": "^2.2.2",
     "react-notify-resize": "^2.0.2",

@@ -30,8 +30,52 @@ export const getFirstCollision = function( layout, layoutItem ) {
     return layout.find( l => collides( l, layoutItem ) );
 };
 
-export const getAllCollisions = function( layout, layoutItem ) {
-    return layout.filter( l => collides( l, layoutItem ) );
+export const canMoveElement = function( id, nextLayoutItem, layout ) {
+    const layoutItem = {
+        ...nextLayoutItem,
+        id
+    };
+
+    return !getFirstCollision( layout, layoutItem );
+};
+
+export const removeElement = function( layout, id ) {
+    if ( !id || !layout ) {
+        return layout;
+    }
+
+    return layout.filter( item => item.id !== id );
+};
+
+export const addOrUpdateElement = function( layout, layoutItem ) {
+    layout = [].concat( layout );
+
+    for ( var i = 0; i < layout.length; i++ ) {
+        if ( layout[ i ].id === layoutItem.id ) {
+            layout[ i ] = layoutItem;
+            return layout;
+        }
+    }
+
+    return [
+        ...layout,
+        layoutItem
+    ];
+};
+
+export const setLayoutItemBounds = function( layoutItem, { x, y, height, width } ) {
+    if ( typeof x !== 'number' ) x = layoutItem.x;
+    if ( typeof y !== 'number' ) y = layoutItem.y;
+    if ( typeof height !== 'number' ) height = layoutItem.height;
+    if ( typeof width !== 'number' ) width = layoutItem.width;
+
+    return {
+        ...layoutItem,
+        x,
+        y,
+        height,
+        width
+    };
 };
 
 /**
@@ -65,6 +109,9 @@ export const moveElement = function( layout, layoutItem, x, y ) {
     return layout;
 };
 
+/**
+ * Checks against collisions when resizing the element
+ */
 export const resizeElement = function( layout, layoutItem, width, height ) {
     if ( layoutItem.isStatic ) {
         return layout;
@@ -90,6 +137,13 @@ export const resizeElement = function( layout, layoutItem, width, height ) {
     layoutItem.height = height;
 
     return layout;
+};
+
+/**
+ * Finds space in layout to place element
+ */
+export const fitElement = function( layout, layoutItem ) {
+
 };
 
 export const sortLayoutItemsByRowColumn = function( layout ) {

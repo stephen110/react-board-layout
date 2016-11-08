@@ -1,4 +1,5 @@
 .react-board-item {
+    display: block;
     position: relative;
     padding: 0 10px 10px 0;
     z-index: 2;
@@ -12,13 +13,12 @@
 
 .react-board-item.resizing {
     z-index: 1;
-    transition-property: all;
-    transition: all 150ms ease;
+    transition-property: all !important;
+    transition: all 150ms ease !important;
 }
 
-.react-board-item.react-draggable-dragging {
-    transition: none;
-    z-index: 3;
+.react-board-item.dragging {
+    display: none;
 }
 
 .react-board-item.hidden {
@@ -31,6 +31,11 @@
 .react-board-layout.show-hidden .react-board-item.hidden {
     visibility: visible;
     opacity: 1;
+}
+
+.react-board-placeholder-container {
+    position: relative;
+    height: 100%;
 }
 
 .react-board-item-placeholder {
@@ -82,4 +87,11 @@
     background-origin: content-box;
     box-sizing: border-box;
     cursor: se-resize;
+}
+
+
+.react-board-item {
+    position: absolute;
+    height: 100px;
+    width: 100px;
 }

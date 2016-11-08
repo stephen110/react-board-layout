@@ -1,7 +1,6 @@
 .board-set {
     position: relative;
     height: 100%;
-    border: 1px solid #cccccc;
     padding: 10px 0 60px 10px;
 }
 
