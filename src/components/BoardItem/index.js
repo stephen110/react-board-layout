@@ -1,7 +1,7 @@
 
 import React, { Component, PropTypes } from 'react';
-import Resizable from '../Resizable';
 import classNames from 'classnames';
+import ResizeHandle from './handle';
 import { setTransform, setTopLeft } from '../../utils/style';
 import { childrenEqual, shallowEqual } from '../../utils/grid';
 import { DragSource } from 'react-dnd';
@@ -19,6 +19,8 @@ const {
 } = PropTypes;
 
 let instanceCount = 0;
+
+const noop = function(){};
 
 class BoardItem extends Component {
 
@@ -49,10 +51,7 @@ class BoardItem extends Component {
         isHidden : bool.isRequired,
 
         // Callbacks
-        onDragStart : func,
         onDragStop : func,
-        onResizeStart : func,
-        onResize : func,
         onResizeStop : func,
 
         className : string,
@@ -60,30 +59,25 @@ class BoardItem extends Component {
         // react-dnd
         connectDragSource: func,
         connectDragPreview : func,
-        isDragging: bool
+        isDragging : bool
     };
 
     static defaultProps = {
-        minWidth  : 0,
-        maxWidth  : Infinity,
-        minHeight : 0,
-        maxHeight : Infinity,
-        isHidden  : false
+        minWidth     : 1,
+        maxWidth     : Infinity,
+        minHeight    : 1,
+        maxHeight    : Infinity,
+        isHidden     : false,
+        onDragStop   : noop,
+        onResizeStop : noop
     };
 
     constructor( props, context ) {
         super( props, context );
-
-        this.onResizeStart  = this.onResizeStart.bind( this );
-        this.onResize       = this.onResize.bind( this );
-        this.onResizeStop   = this.onResizeStop.bind( this );
-        this.calculateXY    = this.calculateXY.bind( this );
-
         this.instanceId = instanceCount++;
-        this.state = {};
     }
 
-    shouldComponentUpdate( nextProps, nextState ) {
+    shouldComponentUpdate( nextProps ) {
         if ( !childrenEqual( nextProps.children, this.props.children ) ) {
             return true;
         }
@@ -92,90 +86,8 @@ class BoardItem extends Component {
         const propsClean = _.omit( this.props, 'children' );
 
         return (
-            !shallowEqual( nextPropsClean, propsClean ) ||
-            !shallowEqual( nextState, this.state )
+            !shallowEqual( nextPropsClean, propsClean )
         );
-    }
-
-    calculateXY( top, left ) {
-        const {
-            columns,
-            rows,
-            width,
-            height,
-            parentWidth,
-            parentHeight
-        } = this.props;
-
-        const columnWidth = parentWidth / columns;
-        const rowHeight = parentHeight / rows;
-
-        let x = Math.round(
-            left / columnWidth
-        );
-
-        let y = Math.round(
-            top / rowHeight
-        );
-
-        x = Math.max( 0,
-            Math.min( x, columns - width )
-        );
-
-        y = Math.max( 0,
-            Math.min( y, rows - height )
-        );
-
-        return { x, y };
-    }
-
-    calculateWH(width, height) {
-        const {
-            parentWidth,
-            parentHeight,
-            columns,
-            rows,
-            x,
-            y,
-            minWidth,
-            maxWidth,
-            minHeight,
-            maxHeight
-        } = this.props;
-
-        const columnWidth = parentWidth / columns;
-        const rowHeight = parentHeight / rows;
-
-        let calculatedWidth = Math.max( 1,
-            Math.min(
-                Math.round( width / columnWidth ),
-                columns - x
-            )
-        );
-
-        let calculatedHeight = Math.max( 1,
-            Math.min(
-                Math.round( height / rowHeight ),
-                rows - y
-            )
-        );
-
-        // Clamp by min/max props
-
-        calculatedWidth = Math.max(
-            Math.min( calculatedWidth, maxWidth ),
-            minWidth
-        );
-
-        calculatedHeight = Math.max(
-            Math.min( calculatedHeight, maxHeight ),
-            minHeight
-        );
-
-        return {
-            width  : calculatedWidth,
-            height : calculatedHeight
-        };
     }
 
     calculatePosition(x, y, width, height ) {
@@ -209,107 +121,44 @@ class BoardItem extends Component {
         return setTopLeft( position );
     }
 
-    onResizeStart( event, data ) {
-        const {
-            id,
-            onResizeStart
-        } = this.props;
-
-        const {
-            node,
-            size
-        } = data;
-
-        const { width, height } = this.calculateWH(
-            size.width,
-            size.height
-        );
-
-        this.setState({
-            resizing : size
-        });
-
-        onResizeStart( id, width, height, {
-            event,
-            node,
-            size
-        });
-    }
-
-    onResize( size ) {
-        const {
-            id,
-            onResize
-        } = this.props;
-
-        const { width, height } = this.calculateWH(
-            size.width,
-            size.height
-        );
-
-        this.setState({
-            resizing : size
-        });
-
-        onResize( id, width, height );
-    }
-
-    onResizeStop( size ) {
-        const {
-            id,
-            onResizeStop
-        } = this.props;
-
-        const { width, height } = this.calculateWH(
-            size.width,
-            size.height
-        );
-
-        this.setState({
-            resizing : null
-        });
-
-        onResizeStop( id, width, height );
-    }
-
-    mixinResizable( child, position ) {
+    mixinResizable( child ) {
         const {
             x,
             y,
+            id,
             rows,
             columns,
+            height,
+            width,
             minWidth,
             minHeight,
             maxWidth,
             maxHeight
         } = this.props;
 
-        const absoluteMax   = this.calculatePosition( 0, 0, columns - x, rows - y);
-        const calculatedMin = this.calculatePosition( 0, 0, minWidth, minHeight );
-        const calculatedMax = this.calculatePosition( 0, 0, maxWidth, maxHeight );
-
         const minConstraints = [
-            calculatedMin.width,
-            calculatedMin.height
+            minWidth,
+            minHeight
         ];
 
         const maxConstraints = [
-            Math.min( calculatedMax.width, absoluteMax.width ),
-            Math.min( calculatedMax.height, absoluteMax.height )
+            Math.min( maxWidth, columns - x ),
+            Math.min( maxHeight, rows - y )
         ];
 
-        return (
-            <Resizable
-                width={position.width}
-                height={position.height}
+        const children = child.props.children ? React.Children.only( child.props.children ) : null;
+
+        return React.cloneElement( child, {}, [
+            children,
+            <ResizeHandle
+                id={id}
+                key="resize-handle"
+                width={width}
+                height={height}
                 minConstraints={minConstraints}
                 maxConstraints={maxConstraints}
-                onResizeStart={this.onResizeStart}
-                onResize={this.onResize}
-                onResizeStop={this.onResizeStop}>
-                {child}
-            </Resizable>
-        );
+            />
+        ]);
     }
 
     renderPlaceholder() {
@@ -346,24 +195,18 @@ class BoardItem extends Component {
             className,
             style,
             isHidden,
-            isDragging,
             connectDragSource,
-            connectDragPreview
+            connectDragPreview,
+            isDragging
         } = this.props;
-
-        const {
-            dragging,
-            resizing
-        } = this.state;
 
         const child      = isHidden ? this.renderPlaceholder() : React.Children.only( children );
         const childProps = child ? child.props : {};
-        const position   = this.calculatePosition( x, y, width, height, dragging );
+        const position   = this.calculatePosition( x, y, width, height );
 
         const childClassName  = childProps.className;
         const mergedClassName = classNames( 'react-board-item', className, {
             'css-transforms' : useCSSTransforms,
-            'resizing' : !!resizing,
             'dragging' : isDragging,
             'hidden' : isHidden,
             [childClassName] : childClassName && !isHidden
@@ -415,38 +258,28 @@ class BoardItem extends Component {
 }
 
 const source = {
-
-    beginDrag : function( props, monitor, component ) {
+    beginDrag : function( props ) {
         const {
             id,
-            onDragStart
+            height,
+            width
         } = props;
-
-        const {
-            calculateXY
-        } = component;
-
-        onDragStart( id );
 
         return {
             id,
-            calculateXY
+            height,
+            width
         };
     },
 
-    endDrag: function( props, monitor ) {
-        console.log( 'Ending Drag', props.id );
-
+    endDrag: function( props ) {
         const {
             id,
             onDragStop
         } = props;
 
-        if ( !monitor.didDrop() ) {
-            onDragStop( id );
-        }
+        onDragStop( id );
     }
-
 };
 
 const collect = function( connect, monitor ) {

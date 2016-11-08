@@ -34,7 +34,7 @@ class Card extends Component {
 }
 
 
-const initialBoardOrder = [ 'A', 'B' ];
+const initialBoardOrder = [ 'A', 'B', 'C' ];
 
 const initialBoardLayouts = {
     'A' : [
@@ -45,6 +45,10 @@ const initialBoardLayouts = {
     'B' : [
         { id: 'b-a', x: 0, y: 0, height: 2, width: 2},
         { id: 'b-b', x: 4, y: 0, height: 2, width: 2}
+    ],
+    'C' : [
+        { id: 'c-a', x: 4, y: 4, height: 2, width: 2},
+        { id: 'c-b', x: 4, y: 0, height: 2, width: 2}
     ]
 };
 

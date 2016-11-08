@@ -3,7 +3,7 @@ import React, { Component, PropTypes } from 'react';
 import classNames from 'classnames';
 import BoardItem from '../BoardItem';
 import { DropTarget } from 'react-dnd';
-import { getLayoutItem, moveElement, resizeElement, canMoveElement } from '../../utils/grid';
+import { getLayoutItem, canMoveElement, calculateXY, calculateWH } from '../../utils/grid';
 import { BOARD_ITEM, RESIZE_HANDLE } from '../../constants';
 import './styles.css';
 
@@ -21,6 +21,7 @@ const noop = function(){};
 class Board extends Component {
 
     static propTypes = {
+        id : string,
         name : string.isRequired,
         className : string,
         style : object,
@@ -44,7 +45,10 @@ class Board extends Component {
         onLayoutChange : func,
         setWorkingItem : func,
 
-        updateItemPosition : func
+        updateItemPosition : func,
+        updateItemSize : func,
+
+        commitWorkingItem : func
     };
 
     static childContextTypes = {
@@ -57,19 +61,16 @@ class Board extends Component {
         isDraggable : true,
         isResizable : true,
         useCSSTransforms : true,
-        onLayoutChange : noop,
+        updateItemPosition : noop,
+        updateItemSize : noop,
         setWorkingItem : noop
     };
 
     constructor( props, context ) {
         super(props, context);
         this.renderBoardItem = this.renderBoardItem.bind(this);
-        this.onDragStart     = this.onDragStart.bind( this );
         this.onDrag          = this.onDrag.bind( this );
-        this.onDragStop      = this.onDragStop.bind( this );
-        this.onResizeStart   = this.onResizeStart.bind( this );
         this.onResize        = this.onResize.bind( this );
-        this.onResizeStop    = this.onResizeStop.bind( this );
     }
 
     getChildContext() {
@@ -77,8 +78,6 @@ class Board extends Component {
             board : this
         };
     }
-
-    onDragStart( id ) {}
 
     onDrag( id, x, y ) {
         let {
@@ -95,7 +94,7 @@ class Board extends Component {
             }
 
             // New item to this board
-            layoutItem = workingItem;
+            layoutItem = workingItem.item;
         }
 
         const nextLayoutItem = {
@@ -114,85 +113,35 @@ class Board extends Component {
         setWorkingItem( nextLayoutItem );
     }
 
-    onDragStop( id, x, y ) {
-        let {
-            setWorkingItem,
-            workingItem,
-            updateItemPosition
-        } = this.props;
-
-        if ( !workingItem ) {
-            return;
-        }
-
-        updateItemPosition( id, workingItem );
-        setWorkingItem( null );
-    }
-
-    onResizeStart( id ) {
-        const {
-            layout,
-            setWorkingItem
-        } = this.props;
-
-        const layoutItem = getLayoutItem( layout, id );
-
-        if ( !layoutItem ) {
-            return;
-        }
-
-        setWorkingItem( layoutItem );
-    }
-
     onResize( id, width, height ) {
         let {
-            name,
             layout,
-            onLayoutChange,
-            setWorkingItem
+            updateItemSize
         } = this.props;
 
-        const layoutItem = getLayoutItem( layout, id );
+        let layoutItem = getLayoutItem( layout, id );
 
         if ( !layoutItem ) {
             return;
         }
 
-        const placeholder = {
-            id,
+        const nextLayoutItem = {
             x : layoutItem.x,
             y : layoutItem.y,
-            width,
             height,
-            isStatic : true
+            width
         };
 
-        layout = resizeElement( layout, layoutItem, width, height );
-        onLayoutChange( name, layout );
-        setWorkingItem( placeholder );
-    }
-
-    onResizeStop( id, width, height ) {
-        let {
-            name,
-            layout,
-            onLayoutChange,
-            setWorkingItem
-        } = this.props;
-
-        const layoutItem = getLayoutItem( layout, id );
-
-        if ( !layoutItem ) {
+        if ( !canMoveElement( id, nextLayoutItem, layout ) ) {
             return;
         }
 
-        layout = resizeElement( layout, layoutItem, width, height );
-        onLayoutChange( name, layout );
-        setWorkingItem( null );
+        updateItemSize( id, nextLayoutItem );
     }
 
     renderPlaceholder() {
         const {
+            id,
             useCSSTransforms,
             workingItem,
             width,
@@ -201,17 +150,19 @@ class Board extends Component {
             rows
         } = this.props;
 
-        if ( !workingItem ) {
+        if ( !workingItem || workingItem.boardId !== id ) {
             return null;
         }
 
+        const item = workingItem.item;
+
         return (
             <BoardItem
-                id={workingItem.id}
-                x={workingItem.x}
-                y={workingItem.y}
-                height={workingItem.height}
-                width={workingItem.width}
+                id={item.id}
+                x={item.x}
+                y={item.y}
+                height={item.height}
+                width={item.width}
                 parentWidth={width}
                 parentHeight={height}
                 columns={columns}
@@ -238,7 +189,8 @@ class Board extends Component {
             draggableCancel,
             isDraggable,
             isResizable,
-            layout
+            layout,
+            commitWorkingItem
         } = this.props;
 
         const layoutItem = getLayoutItem( layout, child.key );
@@ -269,10 +221,8 @@ class Board extends Component {
                 handle={draggableHandle}
                 isHidden={layoutItem.isHidden}
                 isDraggable={draggable}
-                onDragStart={this.onDragStart}
-                onDragStop={this.onDragStop}
+                onDragStop={commitWorkingItem}
                 isResizable={resizable}
-                onResizeStart={this.onResizeStart}
                 onResize={this.onResize}
                 onResizeStop={this.onResizeStop}
                 useCSSTransforms={useCSSTransforms}
@@ -328,53 +278,65 @@ const boardTarget = {
     hover : function( props, monitor, component ) {
         const item = monitor.getItem();
         const type = monitor.getItemType();
+
         const clientOffset = monitor.getSourceClientOffset();
         const initialClientOffset = monitor.getInitialSourceClientOffset();
 
+        if ( clientOffset.x === this.x && clientOffset.y === this.y ) {
+            return;
+        }
+
+        this.x = clientOffset.x;
+        this.y = clientOffset.y;
+
         if ( type === BOARD_ITEM ) {
-            const {
-                calculateXY
-            } = item;
+            const nextXY = calculateXY( clientOffset.y, clientOffset.x, item.height, item.width, props.columns, props.rows, props.height, props.width );
 
-            if ( clientOffset.x !== this.x || clientOffset.y !== this.y ) {
-                const { x, y } = calculateXY( clientOffset.y, clientOffset.x );
-
-                if ( item.x !== x && item.y !== y ) {
-                    component.onDrag( item.id, x, y, {} );
-                }
-
-                this.x = clientOffset.x;
-                this.y = clientOffset.y;
+            if ( item.x !== nextXY.x && item.y !== nextXY.y ) {
+                component.onDrag( item.id, nextXY.x, nextXY.y );
             }
         }
         else if ( type === RESIZE_HANDLE ) {
             const {
-                onResize,
+                id,
+                width,
                 height,
-                width
+                minConstraints,
+                maxConstraints
             } = item;
+
+            const rowHeight = props.height / props.rows;
+            const columnWidth = props.width / props.columns;
+
+            const pixelWidth = columnWidth * width;
+            const pixelHeight = rowHeight * height;
 
             const deltaX = clientOffset.x - initialClientOffset.x;
             const deltaY = clientOffset.y - initialClientOffset.y;
 
-            onResize( width + deltaX, height + deltaY );
+            if ( typeof this.slackH === 'undefined' ) {
+                this.slackW = 0;
+                this.slackH = 0;
+            }
+
+            const nextPixelWidth = pixelWidth + deltaX + this.slackW;
+            const nextPixelHeight = pixelHeight + deltaY + this.slackH;
+
+            // Picked this up from react-resizable - seems to smooth size changes
+            this.slackW += ( pixelWidth + deltaX ) - nextPixelWidth;
+            this.slackH += ( pixelHeight + deltaY ) - nextPixelHeight;
+
+            const nextWH = calculateWH( nextPixelHeight, nextPixelWidth, props.columns, props.rows, props.height, props.width, minConstraints, maxConstraints );
+            component.onResize( id, nextWH.width, nextWH.height );
         }
     },
 
-    drop : function( props, monitor, component ) {
-        const item = monitor.getItem();
-        const type = monitor.getItemType();
-        const clientOffset = monitor.getSourceClientOffset();
+    drop : function( props, monitor ) {
+        this.x = null;
+        this.y = null;
 
-        if ( type === BOARD_ITEM ) {
-            this.x = null;
-            this.y = null;
-
-            const { calculateXY } = item;
-            const { x, y } = calculateXY( clientOffset.y, clientOffset.x, item );
-
-            component.onDragStop( item.id, x, y );
-        }
+        this.slackW = 0;
+        this.slackH = 0;
     }
 
 };

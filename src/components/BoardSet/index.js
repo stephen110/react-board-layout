@@ -2,9 +2,10 @@
 import React, { Component, PropTypes } from 'react';
 import { NotifyResize } from 'react-notify-resize';
 import { setTransform } from '../../utils/style';
-import { removeElement, setLayoutItemBounds, addOrUpdateElement, getLayoutItem } from '../../utils/grid';
+import { removeElement, setLayoutItemBounds, addOrUpdateElement, getLayoutItem, canMoveElement } from '../../utils/grid';
 import { DragDropContext } from 'react-dnd';
-import BoardThumbnail from '../BoardThumbnail';
+import BoardThumbnail from './thumbnail';
+import BoardEdge from './edge';
 import HTML5Backend from 'react-dnd-html5-backend';
 import _ from 'lodash';
 import './styles.css';
@@ -52,6 +53,8 @@ class BoardSet extends Component {
         this.onCreateBoard = this.onCreateBoard.bind( this );
         this.onSetWorkingItem = this.onSetWorkingItem.bind( this );
         this.onUpdateItemPosition = this.onUpdateItemPosition.bind( this );
+        this.onUpdateItemSize = this.onUpdateItemSize.bind( this );
+        this.onCommitWorkingItem = this.onCommitWorkingItem.bind( this );
     }
 
     componentWillReceiveProps( nextProps ) {
@@ -87,11 +90,8 @@ class BoardSet extends Component {
             width
         } = this.state;
 
-        let didMount = false;
-
         if ( !height && !width ) {
             // Initial mount
-            didMount = true;
             nextSize.mounted = true;
             nextSize.boardLayouts = this.props.boardLayouts;
         }
@@ -129,6 +129,10 @@ class BoardSet extends Component {
             selectedIndex
         } = this.state;
 
+        const {
+            boardLayouts
+        } = this.props;
+
         if ( selectedIndex !== index ) {
             const updates = {
                 selectedIndex : index
@@ -137,11 +141,16 @@ class BoardSet extends Component {
             if ( workingItem ) {
                 const board = this.props.children[ index ];
 
-                if ( board ) {
-                    updates.workingItem = {
-                        ...workingItem,
-                        boardId : board.props.name
-                    };
+                if ( board && boardLayouts ) {
+                    const boardLayout = boardLayouts[ board.key ];
+
+                    // Find open space
+                    if ( canMoveElement( workingItem.item.id, workingItem.item, boardLayout ) ) {
+                        updates.workingItem = {
+                            ...workingItem,
+                            boardId : board.key
+                        };
+                    }
                 }
             }
 
@@ -173,7 +182,20 @@ class BoardSet extends Component {
         }
     }
 
-    onUpdateItemPosition( boardId, itemId, nextPosition ) {
+    onCommitWorkingItem( id ) {
+        const {
+            workingItem
+        } = this.state;
+
+        if ( !workingItem ) {
+            return;
+        }
+
+        this.onUpdateItemPosition( id, workingItem.item );
+        this.onSetWorkingItem( null, null );
+    }
+
+    onUpdateItemPosition( itemId, nextPosition ) {
         const {
             workingItem,
             boardLayouts
@@ -183,9 +205,10 @@ class BoardSet extends Component {
             throw new Error( 'No working item available to update.  Check that setWorkingItem isn\' called before updateItemPosition' );
         }
 
+        const boardId          = workingItem.boardId;
         const originalBoardId  = workingItem.originalBoardId;
-        const prevBoardLayouts = this.state.boardLayouts;
-        const nextBoardLayouts = { ...prevBoardLayouts };
+        const prevBoardLayouts = boardLayouts;
+        const nextBoardLayouts = { ...boardLayouts };
         const prevBoardLayout  = boardLayouts[ boardId ] || [];
         let layoutItem = null;
 
@@ -208,6 +231,31 @@ class BoardSet extends Component {
 
         const nextLayoutItem  = setLayoutItemBounds( layoutItem, nextPosition );
         nextBoardLayouts[ boardId ] = addOrUpdateElement( prevBoardLayout, nextLayoutItem );
+
+        this.setState({
+            boardLayouts : nextBoardLayouts
+        });
+
+        return this.onBoardLayoutsMayHaveChanged( nextBoardLayouts, prevBoardLayouts );
+    }
+
+    onUpdateItemSize( boardId, itemId, nextSize ) {
+        const {
+            boardLayouts
+        } = this.state;
+
+        const prevBoardLayouts = boardLayouts;
+        const nextBoardLayouts = { ...boardLayouts };
+
+        const boardLayout = boardLayouts[ boardId ] || [];
+        const layoutItem  = getLayoutItem( boardLayout, itemId );
+
+        if ( !layoutItem ) {
+            return;
+        }
+
+        const nextLayoutItem = setLayoutItemBounds( layoutItem, nextSize );
+        nextBoardLayouts[ boardId ] = addOrUpdateElement( boardLayout, nextLayoutItem );
 
         this.setState({
             boardLayouts : nextBoardLayouts
@@ -244,8 +292,23 @@ class BoardSet extends Component {
             };
         };
 
+        const leftActivate = () => this.onSelectBoard( selectedIndex - 1 );
+        const rightActivate = () => this.onSelectBoard( selectedIndex + 1 );
+        const leftActivateEnabled = selectedIndex > 0;
+        const rightActivateEnabled = selectedIndex < React.Children.count( children ) - 1;
+
         return (
             <div className="board-set">
+                <BoardEdge
+                    className="board-edge--left"
+                    onActivate={leftActivate}
+                    isEnabled={leftActivateEnabled}
+                />
+                <BoardEdge
+                    className="board-edge--right"
+                    onActivate={rightActivate}
+                    isEnabled={rightActivateEnabled}
+                />
                 <div className="board-thumbnails">
                     {React.Children.map( children, ( child, index ) => (
                         <BoardThumbnail
@@ -285,13 +348,13 @@ class BoardSet extends Component {
                             height
                         });
 
-                        const boardWorkingItem = workingItem && workingItem.boardId === boardId ?
-                            workingItem.item : null;
                         const setWorkingItem = item => this.onSetWorkingItem( boardId, item );
-                        const updateItemPosition = ( itemId, layout ) => this.onUpdateItemPosition( boardId, itemId, layout );
+                        const updateItemPosition = ( itemId, layout ) => this.onUpdateItemPosition( itemId, layout );
+                        const updateItemSize = ( itemId, layout ) => this.onUpdateItemSize( boardId, itemId, layout );
 
                         return React.cloneElement( child, {
                             boardSet : this,
+                            id : boardId,
                             showHidden,
                             active,
                             style,
@@ -300,9 +363,11 @@ class BoardSet extends Component {
                             layout,
                             columns : 12,
                             rows : 12,
-                            workingItem : boardWorkingItem,
+                            workingItem,
                             setWorkingItem,
-                            updateItemPosition
+                            updateItemPosition,
+                            updateItemSize,
+                            commitWorkingItem : this.onCommitWorkingItem
                         });
                     })}
                 </div>

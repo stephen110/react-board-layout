@@ -3,7 +3,3 @@
     transition: height 300ms ease;
     transition-property: transform;
 }
-
-.react-board-item.css-transforms {
-    transition-property: transform;
-}

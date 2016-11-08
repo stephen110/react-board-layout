@@ -49,3 +49,19 @@
     height: 100%;
     overflow: hidden;
 }
+
+.board-edge {
+    position: absolute;
+    top: 0;
+    width: 30px;
+    height: 100%;
+    z-index: 15;
+}
+
+.board-edge--left {
+    left: 0;
+}
+
+.board-edge--right {
+    right: 0;
+}

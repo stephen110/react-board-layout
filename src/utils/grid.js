@@ -140,27 +140,6 @@ export const resizeElement = function( layout, layoutItem, width, height ) {
 };
 
 /**
- * Finds space in layout to place element
- */
-export const fitElement = function( layout, layoutItem ) {
-
-};
-
-export const sortLayoutItemsByRowColumn = function( layout ) {
-    return [].concat( layout ).sort( ( a, b ) => {
-        if ( a.y > b.y || ( a.y === b.y && a.x > b.x ) ) {
-            return 1;
-        }
-
-        if (a.y === b.y && a.x === b.x) {
-            return 0; // Without this, we can get different sort results in IE vs. Chrome/FF
-        }
-
-        return -1;
-    });
-};
-
-/**
  * Performs equality by iterating through keys on an object and returning false
  * when any key has values which are not strictly equal between the arguments.
  * Returns true when the values of all keys are strictly equal.
@@ -192,4 +171,63 @@ export const shallowEqual = function (objA, objB) {
     }
 
     return true;
+};
+
+export const calculateXY = function( top, left, height, width, columns, rows, containerHeight, containerWidth ) {
+    const columnWidth = containerWidth / columns;
+    const rowHeight = containerHeight / rows;
+
+    let x = Math.round(
+        left / columnWidth
+    );
+
+    let y = Math.round(
+        top / rowHeight
+    );
+
+    x = Math.max( 0,
+        Math.min( x, columns - width )
+    );
+
+    y = Math.max( 0,
+        Math.min( y, rows - height )
+    );
+
+    return { x, y };
+};
+
+export const calculateWH = function( height, width, columns, rows, containerHeight, containerWidth, minConstraints, maxConstraints ) {
+    const columnWidth = containerWidth / columns;
+    const rowHeight = containerHeight / rows;
+
+    const [
+        minWidth = 0,
+        minHeight = 0
+    ] = minConstraints;
+
+    const [
+        maxWidth = Infinity,
+        maxHeight = Infinity
+    ] = maxConstraints;
+
+    const calculatedWidth = Math.max(
+        minWidth,
+        Math.min(
+            Math.round( width / columnWidth ),
+            maxWidth
+        )
+    );
+
+    const calculatedHeight = Math.max(
+        minHeight,
+        Math.min(
+            Math.round( height / rowHeight ),
+            maxHeight
+        )
+    );
+
+    return {
+        width  : calculatedWidth,
+        height : calculatedHeight
+    };
 };
