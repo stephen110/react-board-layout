@@ -4,7 +4,7 @@ import classNames from 'classnames';
 import BoardItem from '../BoardItem';
 import { DropTarget } from 'react-dnd';
 import { getLayoutItem, moveElement, resizeElement, canMoveElement } from '../../utils/grid';
-import { BOARD_ITEM } from '../../constants';
+import { BOARD_ITEM, RESIZE_HANDLE } from '../../constants';
 import './styles.css';
 
 const {
@@ -327,35 +327,54 @@ const boardTarget = {
 
     hover : function( props, monitor, component ) {
         const item = monitor.getItem();
+        const type = monitor.getItemType();
         const clientOffset = monitor.getSourceClientOffset();
+        const initialClientOffset = monitor.getInitialSourceClientOffset();
 
-        const {
-            calculateXY
-        } = item;
+        if ( type === BOARD_ITEM ) {
+            const {
+                calculateXY
+            } = item;
 
-        if ( clientOffset.x !== this.x || clientOffset.y !== this.y ) {
-            const { x, y } = calculateXY( clientOffset.y, clientOffset.x );
+            if ( clientOffset.x !== this.x || clientOffset.y !== this.y ) {
+                const { x, y } = calculateXY( clientOffset.y, clientOffset.x );
 
-            if ( item.x !== x && item.y !== y ) {
-                component.onDrag( item.id, x, y, {} );
+                if ( item.x !== x && item.y !== y ) {
+                    component.onDrag( item.id, x, y, {} );
+                }
+
+                this.x = clientOffset.x;
+                this.y = clientOffset.y;
             }
+        }
+        else if ( type === RESIZE_HANDLE ) {
+            const {
+                onResize,
+                height,
+                width
+            } = item;
 
-            this.x = clientOffset.x;
-            this.y = clientOffset.y;
+            const deltaX = clientOffset.x - initialClientOffset.x;
+            const deltaY = clientOffset.y - initialClientOffset.y;
+
+            onResize( width + deltaX, height + deltaY );
         }
     },
 
     drop : function( props, monitor, component ) {
-        this.x = null;
-        this.y = null;
-
         const item = monitor.getItem();
+        const type = monitor.getItemType();
         const clientOffset = monitor.getSourceClientOffset();
 
-        const { calculateXY } = item;
-        const { x, y } = calculateXY( clientOffset.y, clientOffset.x, item );
+        if ( type === BOARD_ITEM ) {
+            this.x = null;
+            this.y = null;
 
-        component.onDragStop( item.id, x, y );
+            const { calculateXY } = item;
+            const { x, y } = calculateXY( clientOffset.y, clientOffset.x, item );
+
+            component.onDragStop( item.id, x, y );
+        }
     }
 
 };
@@ -368,7 +387,7 @@ const collect = function( connect, monitor ) {
 };
 
 export default DropTarget(
-    BOARD_ITEM,
+    [ BOARD_ITEM, RESIZE_HANDLE ],
     boardTarget,
     collect
 )( Board );

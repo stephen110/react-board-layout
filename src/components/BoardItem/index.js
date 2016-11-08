@@ -1,6 +1,6 @@
 
 import React, { Component, PropTypes } from 'react';
-import { Resizable } from 'react-resizable';
+import Resizable from '../Resizable';
 import classNames from 'classnames';
 import { setTransform, setTopLeft } from '../../utils/style';
 import { childrenEqual, shallowEqual } from '../../utils/grid';
@@ -236,16 +236,11 @@ class BoardItem extends Component {
         });
     }
 
-    onResize( event, data ) {
+    onResize( size ) {
         const {
             id,
             onResize
         } = this.props;
-
-        const {
-            node,
-            size
-        } = data;
 
         const { width, height } = this.calculateWH(
             size.width,
@@ -256,23 +251,14 @@ class BoardItem extends Component {
             resizing : size
         });
 
-        onResize( id, width, height, {
-            event,
-            node,
-            size
-        });
+        onResize( id, width, height );
     }
 
-    onResizeStop( event, data ) {
+    onResizeStop( size ) {
         const {
             id,
             onResizeStop
         } = this.props;
-
-        const {
-            node,
-            size
-        } = data;
 
         const { width, height } = this.calculateWH(
             size.width,
@@ -283,11 +269,7 @@ class BoardItem extends Component {
             resizing : null
         });
 
-        onResizeStop( id, width, height, {
-            event,
-            node,
-            size
-        });
+        onResizeStop( id, width, height );
     }
 
     mixinResizable( child, position ) {
@@ -432,7 +414,7 @@ class BoardItem extends Component {
 
 }
 
-const boardItemSource = {
+const source = {
 
     beginDrag : function( props, monitor, component ) {
         const {
@@ -477,6 +459,6 @@ const collect = function( connect, monitor ) {
 
 export default DragSource(
     BOARD_ITEM,
-    boardItemSource,
+    source,
     collect
 )( BoardItem );
