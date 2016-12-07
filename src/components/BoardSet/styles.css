@@ -1,14 +1,14 @@
 .board-set {
     position: relative;
     height: 100%;
-    padding: 10px 0 60px 10px;
+    padding: 10px 0 30px 10px;
 }
 
 .board-thumbnails {
     position: absolute;
     bottom: 0;
     left: 0;
-    height: 40px;
+    height: 30px;
     padding: 5px 20px;
     width: 100%;
     border-top: 1px solid #cccccc;
@@ -21,23 +21,22 @@
 
 .board-thumbnail {
     display: inline-block;
-    background-color: rgba(255, 255, 255, 0.8);
-    border-radius: 3px;
-    border: 1px solid rgba(0, 0, 0, 0.2);
     text-align: center;
-    height: 30px;
+    height: 20px;
     width: 80px;
-    line-height: 30px;
-    margin-right: 10px;
+    line-height: 20px;
+    margin-right: 20px;
     cursor: pointer;
+    color: #555555;
 }
 
 .board-thumbnail:hover {
-    background-color: rgba(255, 255, 255, 0.3);
+    text-decoration: underline;
 }
 
 .board-thumbnail.selected {
-    border-color: #1184CE;
+    color: #1184CE;
+    text-decoration: none;
 }
 
 .board-thumbnail:last-of-type {
@@ -55,7 +54,7 @@
     top: 0;
     width: 30px;
     height: 100%;
-    z-index: 15;
+    z-index: 0;
 }
 
 .board-edge--left {

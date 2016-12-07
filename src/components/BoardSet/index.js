@@ -15,7 +15,8 @@ const {
     bool,
     func,
     number,
-    objectOf
+    objectOf,
+    object
 } = PropTypes;
 
 const noop = function(){};
@@ -26,13 +27,16 @@ class BoardSet extends Component {
         maxBoards : number,
         showHidden : bool,
         boardLayouts : objectOf( array ).isRequired,
-        onBoardLayoutsChange : func
+        onBoardLayoutsChange : func,
+        onSizeChange : func,
+        breakpoints : object
     };
 
     static defaultProps = {
         maxBoards   : Infinity,
         showHidden  : false,
-        onBoardLayoutsChange : noop
+        onBoardLayoutsChange : noop,
+        onSizeChange : noop
     };
 
     // Initial state
@@ -90,6 +94,10 @@ class BoardSet extends Component {
             width
         } = this.state;
 
+        const {
+            onSizeChange
+        } = this.props;
+
         if ( !height && !width ) {
             // Initial mount
             nextSize.mounted = true;
@@ -97,6 +105,7 @@ class BoardSet extends Component {
         }
 
         this.setState( nextSize );
+        onSizeChange( nextSize );
     }
 
     onSetWorkingItem( boardId, item ) {
@@ -268,7 +277,8 @@ class BoardSet extends Component {
         const {
             children,
             maxBoards,
-            showHidden
+            showHidden,
+            breakpoints
         } = this.props;
 
         const {
@@ -313,6 +323,7 @@ class BoardSet extends Component {
                     {React.Children.map( children, ( child, index ) => (
                         <BoardThumbnail
                             index={index}
+                            name={child.props.name}
                             onClick={clickHandler(index)}
                             selected={index === selectedIndex}
                             selectBoard={this.onSelectBoard}
@@ -361,6 +372,7 @@ class BoardSet extends Component {
                             height,
                             width,
                             layout,
+                            breakpoints,
                             columns : 12,
                             rows : 12,
                             workingItem,

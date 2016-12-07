@@ -34,6 +34,7 @@ class Board extends Component {
         rows : number,
         draggableCancel : string,
         draggableHandle : string,
+        breakpoints : object,
 
         isDraggable : bool,
         isResizable : bool,
@@ -191,7 +192,8 @@ class Board extends Component {
             isDraggable,
             isResizable,
             layout,
-            commitWorkingItem
+            commitWorkingItem,
+            breakpoints
         } = this.props;
 
         const layoutItem = getLayoutItem( layout, child.key );
@@ -233,6 +235,7 @@ class Board extends Component {
                 maxHeight={layoutItem.maxHeight}
                 minWidth={layoutItem.minWidth}
                 maxWidth={layoutItem.maxWidth}
+                breakpoints={breakpoints}
                 x={layoutItem.x}
                 y={layoutItem.y}
                 id={layoutItem.id}
@@ -250,11 +253,13 @@ class Board extends Component {
             parentHeight,
             showHidden,
             connectDropTarget,
-            workingItem
+            workingItem,
+            active
         } = this.props;
 
         const mergedClassName = classNames( 'react-board-layout', className, {
-            'show-hidden' : showHidden || workingItem
+            'show-hidden' : showHidden || workingItem,
+            'active' : active
         });
 
         const mergedStyle = {

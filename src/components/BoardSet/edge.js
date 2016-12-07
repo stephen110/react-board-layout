@@ -19,7 +19,7 @@ class BoardEdge extends Component {
         className : string,
         onActivate : func.isRequired,
         isEnabled : bool,
-        delay : number,
+        delay : number
     };
 
     static defaultProps = {

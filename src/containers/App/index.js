@@ -34,10 +34,10 @@ class Card extends Component {
 }
 
 
-const initialBoardOrder = [ 'A', 'B', 'C' ];
+const initialBoardOrder = [ 'Properties', 'B', 'C' ];
 
 const initialBoardLayouts = {
-    'A' : [
+    'Properties' : [
         { id: 'a-a', x: 0, y: 0, height: 4, width: 2},
         { id: 'a-b', x: 2, y: 0, height: 4, width: 2},
         { id: 'a-c', x: 6, y: 0, height: 4, width: 2, isHidden: true}
@@ -50,6 +50,12 @@ const initialBoardLayouts = {
         { id: 'c-a', x: 4, y: 4, height: 2, width: 2},
         { id: 'c-b', x: 4, y: 0, height: 2, width: 2}
     ]
+};
+
+const breakpoints = {
+    'small' : 500,
+    'medium' : 800,
+    'big' : 1200
 };
 
 
@@ -129,7 +135,8 @@ class App extends Component {
                         onCreateBoard={this.onCreateBoard}
                         onBoardLayoutsChange={this.onBoardLayoutsChange}
                         maxBoards={3}
-                        showHidden={true}>
+                        showHidden={true}
+                        breakpoints={breakpoints}>
                         {boardOrder.map( key => {
                             const layout = boardLayouts[ key ] || [];
 

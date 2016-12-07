@@ -15,10 +15,9 @@ const {
     array,
     string,
     func,
-    bool
+    bool,
+    object
 } = PropTypes;
-
-let instanceCount = 0;
 
 const noop = function(){};
 
@@ -37,6 +36,7 @@ class BoardItem extends Component {
         parentWidth : number.isRequired,
         parentHeight : number.isRequired,
         margin : array,
+        breakpoints : object,
 
         // Grid units
         x : number.isRequired,
@@ -72,11 +72,6 @@ class BoardItem extends Component {
         onResizeStop : noop
     };
 
-    constructor( props, context ) {
-        super( props, context );
-        this.instanceId = instanceCount++;
-    }
-
     shouldComponentUpdate( nextProps ) {
         if ( !childrenEqual( nextProps.children, this.props.children ) ) {
             return true;
@@ -107,6 +102,29 @@ class BoardItem extends Component {
             width : Math.round( width * columnWidth ),
             height : Math.round( height * rowHeight )
         };
+    }
+
+    calulateBreakpoint( width ) {
+        const {
+            breakpoints
+        } = this.props;
+
+        if ( !breakpoints ) {
+            return null;
+        }
+
+        const sortedBreakpoints = Object.keys( breakpoints ).map( name => {
+            return {
+                name,
+                width : breakpoints[ name ]
+            };
+        }).sort( ( a, b ) => a.width - b.width );
+
+        for ( let i = 0; i < sortedBreakpoints.length; i++ ) {
+            if ( width <= sortedBreakpoints[ i ].width ) {
+                return sortedBreakpoints[ i ].name;
+            }
+        }
     }
 
     createStyle( position ) {
@@ -205,10 +223,11 @@ class BoardItem extends Component {
         const position   = this.calculatePosition( x, y, width, height );
 
         const childClassName  = childProps.className;
-        const mergedClassName = classNames( 'react-board-item', className, {
+        const breakpointName  = this.calulateBreakpoint( position.width );
+        const mergedClassName = classNames( 'react-board-item', className, breakpointName, {
             'css-transforms' : useCSSTransforms,
             'dragging' : isDragging,
-            'hidden' : isHidden,
+            'placeholder' : isHidden,
             [childClassName] : childClassName && !isHidden
         });
 

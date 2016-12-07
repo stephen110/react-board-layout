@@ -3,26 +3,33 @@
     position: relative;
     padding: 0 10px 10px 0;
     z-index: 2;
+}
+
+.react-board-item {
+    transition: all 0s;
+}
+
+.react-board-layout.active .react-board-item {
     transition: all 150ms ease;
     transition-property: left, top;
 }
 
-.react-board-item.css-transforms {
-    transition-property: transform, height, width;
+.react-board-layout.active .react-board-item.css-transforms {
+    transition-property: transform;
 }
 
 .react-board-item.dragging {
     display: none;
 }
 
-.react-board-item.hidden {
+.react-board-item.placeholder {
     visibility: hidden;
     opacity: 0;
     transition-property: all;
     text-align: center;
 }
 
-.react-board-layout.show-hidden .react-board-item.hidden {
+.react-board-layout.show-hidden .react-board-item.placeholder {
     visibility: visible;
     opacity: 1;
 }

@@ -7,7 +7,8 @@ import { BOARD_ITEM } from '../../constants';
 const {
     bool,
     func,
-    number
+    number,
+    string
 } = PropTypes;
 
 class BoardThumb extends Component {
@@ -16,7 +17,8 @@ class BoardThumb extends Component {
         onClick : func.isRequired,
         index : number.isRequired,
         selected : bool.isRequired,
-        selectBoard : func.isRequired
+        selectBoard : func.isRequired,
+        name : string.isRequired
     };
 
     componentWillReceiveProps( nextProps ) {
@@ -45,15 +47,15 @@ class BoardThumb extends Component {
         const {
             connectDropTarget,
             onClick,
-            index,
-            selected
+            selected,
+            name
         } = this.props;
 
         return connectDropTarget(
             <div
                 className={classNames('board-thumbnail', { selected : selected})}
                 onClick={onClick}>
-                {index + 1}
+                {name}
             </div>
         )
     }
