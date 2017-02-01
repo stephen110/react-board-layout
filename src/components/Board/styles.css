@@ -1,5 +1,10 @@
 .react-board-layout {
+    display: none;
     position: absolute;
     transition: height 300ms ease;
     transition-property: transform;
+}
+
+.react-board-layout.active {
+    display: block;
 }
