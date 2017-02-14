@@ -254,12 +254,14 @@ class Board extends Component {
             showHidden,
             connectDropTarget,
             workingItem,
-            active
+            active,
+            transitioning
         } = this.props;
 
         const mergedClassName = classNames( 'react-board-layout', className, {
             'show-hidden' : showHidden || workingItem,
-            'active' : active
+            'active' : active,
+            'transitioning' : transitioning
         });
 
         const mergedStyle = {

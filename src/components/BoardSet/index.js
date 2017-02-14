@@ -7,6 +7,7 @@ import { DragDropContext } from 'react-dnd';
 import BoardThumbnail from './thumbnail';
 import BoardEdge from './edge';
 import HTML5Backend from 'react-dnd-html5-backend';
+import classNames from 'classnames';
 import _ from 'lodash';
 import './styles.css';
 
@@ -47,7 +48,8 @@ class BoardSet extends Component {
         workingItem : null,
         boardLayouts : null,
         oldBoardLayouts : null,
-        selectedIndex : 0
+        selectedIndex : 0,
+        transitioning : false
     };
 
     constructor( props, context ) {
@@ -286,7 +288,8 @@ class BoardSet extends Component {
             width,
             selectedIndex,
             workingItem,
-            boardLayouts
+            boardLayouts,
+            transitioning
         } = this.state;
 
         const childCount = React.Children.count( children );
@@ -295,9 +298,23 @@ class BoardSet extends Component {
         const clickHandler = index => {
             return () => {
                 if ( index !== this.state.selectedIndex ) {
+                    if ( this.transitionTimer ) {
+                        clearTimeout( this.transitionTimer );
+                    }
+
                     this.setState({
-                        selectedIndex : index
+                        selectedIndex : index,
+                        transitioning : true
                     });
+
+                    this.transitionTimer = setTimeout( () => {
+                        clearTimeout( this.transitionTimer );
+                        this.transitionTimer = null;
+
+                        this.setState({
+                            transitioning : false
+                        });
+                    }, 400 );
                 }
             };
         };
@@ -308,7 +325,7 @@ class BoardSet extends Component {
         const rightActivateEnabled = selectedIndex < React.Children.count( children ) - 1;
 
         return (
-            <div className="board-set">
+            <div className={classNames('board-set', { 'single-board' : childCount === 1 && maximumReached})}>
                 <BoardEdge
                     className="board-edge--left"
                     onActivate={leftActivate}
@@ -368,6 +385,7 @@ class BoardSet extends Component {
                             id : boardId,
                             showHidden,
                             active,
+                            transitioning,
                             style,
                             height,
                             width,

@@ -4,6 +4,7 @@ import Board from '../../components/Board';
 import './styles.css';
 
 const {
+    func,
     string
 } = PropTypes;
 
@@ -12,12 +13,19 @@ class Card extends Component {
         text: string.isRequired
     };
 
+    static contextTypes = {
+        connectDragSource : func
+    };
+
     render() {
         const {
             text,
-            connectDragSource,
             isDragging
         } = this.props;
+
+        const {
+            connectDragSource
+        } = this.context;
 
         if ( isDragging ) {
             return null;
@@ -26,7 +34,7 @@ class Card extends Component {
         return (
             <div className="card">
                 {connectDragSource(
-                    <div className="title">{text}</div>
+                    <div className="title"><input type="text" />{text}</div>
                 )}
             </div>
         );

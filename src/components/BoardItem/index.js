@@ -62,6 +62,10 @@ class BoardItem extends Component {
         isDragging : bool
     };
 
+    static childContextTypes = {
+        connectDragSource : func
+    };
+
     static defaultProps = {
         minWidth     : 1,
         maxWidth     : Infinity,
@@ -71,6 +75,16 @@ class BoardItem extends Component {
         onDragStop   : noop,
         onResizeStop : noop
     };
+
+    getChildContext() {
+        const {
+            connectDragSource
+        } = this.props;
+
+        return {
+            connectDragSource
+        };
+    }
 
     shouldComponentUpdate( nextProps ) {
         if ( !childrenEqual( nextProps.children, this.props.children ) ) {

@@ -1,10 +1,15 @@
 .react-board-layout {
-    display: none;
+    visibility: hidden;
     position: absolute;
     transition: height 300ms ease;
     transition-property: transform;
 }
 
+.react-board-layout.transitioning {
+    visibility: visible;
+}
+
 .react-board-layout.active {
-    display: block;
+    visibility: visible;
+    z-index: 0;
 }

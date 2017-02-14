@@ -49,6 +49,14 @@
     overflow: hidden;
 }
 
+.board-set.single-board {
+    padding-bottom: 0;
+}
+
+.board-set.single-board .board-thumbnails {
+    display: none;
+}
+
 .board-edge {
     position: absolute;
     top: 0;
