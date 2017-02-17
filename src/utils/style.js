@@ -18,8 +18,8 @@ export const setTransform = function( { top, left, width, height } ) {
         MozTransform: translate,
         msTransform: translate,
         OTransform: translate,
-        width: `${width}px`,
-        height: `${height}px`,
+        width: `${width}`,
+        height: `${height}`,
         position: 'absolute'
     };
 };

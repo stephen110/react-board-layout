@@ -2,6 +2,7 @@
 import React, { PropTypes } from 'react';
 import { DragSource } from 'react-dnd';
 import { RESIZE_HANDLE } from '../../constants';
+import './styles.css';
 
 const {
     arrayOf,

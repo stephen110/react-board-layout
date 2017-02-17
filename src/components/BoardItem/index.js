@@ -1,12 +1,12 @@
 
 import React, { Component, PropTypes } from 'react';
-import classNames from 'classnames';
-import ResizeHandle from './handle';
+import ResizeHandle from '../BoardItemHandle/index';
 import { setTransform, setTopLeft } from '../../utils/style';
 import { childrenEqual, shallowEqual } from '../../utils/grid';
 import { DragSource } from 'react-dnd';
 import { BOARD_ITEM } from '../../constants';
 import _ from 'lodash';
+import classNames from 'classnames';
 import './styles.css';
 
 const {
@@ -147,7 +147,11 @@ class BoardItem extends Component {
         } = this.props;
 
         if ( useCSSTransforms ) {
-            return setTransform( position );
+            return setTransform({
+                ...position,
+                height : `${position.height}px`,
+                width : `${position.width}px`
+            });
         }
 
         return setTopLeft( position );
@@ -205,7 +209,7 @@ class BoardItem extends Component {
         }
 
         return connectDragSource(
-            <div className="react-board-item-placeholder">
+            <div className="board-item--placeholder">
                 <div className="placeholder__title">
                     <div className="title__text">{id}</div>
                     <div>(Hidden)</div>
@@ -238,7 +242,7 @@ class BoardItem extends Component {
 
         const childClassName  = childProps.className;
         const breakpointName  = this.calulateBreakpoint( position.width );
-        const mergedClassName = classNames( 'react-board-item', className, breakpointName, {
+        const mergedClassName = classNames( 'board-item', className, breakpointName, {
             'css-transforms' : useCSSTransforms,
             'dragging' : isDragging,
             'placeholder' : isHidden,

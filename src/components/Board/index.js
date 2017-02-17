@@ -1,12 +1,12 @@
 
 import React, { Component, PropTypes } from 'react';
 import { findDOMNode } from 'react-dom';
+import { NotifyResize } from 'react-notify-resize';
 import classNames from 'classnames';
 import BoardItem from '../BoardItem';
 import { DropTarget } from 'react-dnd';
 import { getLayoutItem, canMoveElement, calculateXY, calculateWH } from '../../utils/grid';
 import { BOARD_ITEM, RESIZE_HANDLE } from '../../constants';
-import './styles.css';
 
 const {
     arrayOf,
@@ -28,8 +28,6 @@ class Board extends Component {
         style : object,
 
         // Sizing
-        width : number,
-        height : number,
         columns : number,
         rows : number,
         draggableCancel : string,
@@ -71,8 +69,13 @@ class Board extends Component {
     constructor( props, context ) {
         super(props, context);
         this.renderBoardItem = this.renderBoardItem.bind(this);
-        this.onDrag          = this.onDrag.bind( this );
-        this.onResize        = this.onResize.bind( this );
+        this.onDrag = this.onDrag.bind( this );
+        this.onResize = this.onResize.bind( this );
+
+        this.state = {
+            height : null,
+            width : null
+        };
     }
 
     getChildContext() {
@@ -81,14 +84,14 @@ class Board extends Component {
         };
     }
 
-    onDrag( id, x, y ) {
+    onDrag( itemId, x, y ) {
         let {
             layout,
             setWorkingItem,
             workingItem
         } = this.props;
 
-        let layoutItem = getLayoutItem( layout, id );
+        let layoutItem = getLayoutItem( layout, itemId );
 
         if ( !layoutItem ) {
             if ( !workingItem ) {
@@ -106,22 +109,22 @@ class Board extends Component {
             y
         };
 
-        if ( !canMoveElement( id, nextLayoutItem, layout ) ) {
+        if ( !canMoveElement( itemId, nextLayoutItem, layout ) ) {
             return;
         }
 
-        nextLayoutItem.id = id;
+        nextLayoutItem.id = itemId;
         nextLayoutItem.placeholder = true;
-        setWorkingItem( nextLayoutItem );
+        setWorkingItem( this.props.id, nextLayoutItem );
     }
 
-    onResize( id, width, height ) {
+    onResize( itemId, width, height ) {
         let {
             layout,
             updateItemSize
         } = this.props;
 
-        let layoutItem = getLayoutItem( layout, id );
+        let layoutItem = getLayoutItem( layout, itemId );
 
         if ( !layoutItem ) {
             return;
@@ -134,23 +137,34 @@ class Board extends Component {
             width
         };
 
-        if ( !canMoveElement( id, nextLayoutItem, layout ) ) {
+        if ( !canMoveElement( itemId, nextLayoutItem, layout ) ) {
             return;
         }
 
-        updateItemSize( id, nextLayoutItem );
+        updateItemSize(
+            this.props.id,
+            itemId,
+            nextLayoutItem
+        );
     }
+
+    onBoardResize = ( nextSize ) => {
+        this.setState( nextSize );
+    };
 
     renderPlaceholder() {
         const {
             id,
             useCSSTransforms,
             workingItem,
-            width,
-            height,
             columns,
             rows
         } = this.props;
+
+        const {
+            width,
+            height
+        } = this.state;
 
         if ( !workingItem || workingItem.boardId !== id ) {
             return null;
@@ -173,8 +187,8 @@ class Board extends Component {
                 isDraggable={false}
                 isResizable={false}
                 isHidden={false}>
-                <div className="react-board-placeholder-container">
-                    <div className="react-board-placeholder" />
+                <div className="working-item-container">
+                    <div className="board-item--working" />
                 </div>
             </BoardItem>
         );
@@ -182,8 +196,6 @@ class Board extends Component {
 
     renderBoardItem( child ) {
         const {
-            width,
-            height,
             columns,
             rows,
             useCSSTransforms,
@@ -195,6 +207,11 @@ class Board extends Component {
             commitWorkingItem,
             breakpoints
         } = this.props;
+
+        const {
+            width,
+            height
+        } = this.state;
 
         const layoutItem = getLayoutItem( layout, child.key );
 
@@ -227,7 +244,6 @@ class Board extends Component {
                 onDragStop={commitWorkingItem}
                 isResizable={resizable}
                 onResize={this.onResize}
-                onResizeStop={this.onResizeStop}
                 useCSSTransforms={useCSSTransforms}
                 width={layoutItem.width}
                 height={layoutItem.height}
@@ -250,30 +266,29 @@ class Board extends Component {
             className,
             children,
             style,
-            parentHeight,
             showHidden,
             connectDropTarget,
-            workingItem,
-            active,
-            transitioning
+            workingItem
         } = this.props;
 
-        const mergedClassName = classNames( 'react-board-layout', className, {
-            'show-hidden' : showHidden || workingItem,
-            'active' : active,
-            'transitioning' : transitioning
-        });
+        const {
+            height,
+            width
+        } = this.state;
 
-        const mergedStyle = {
-            height : `${parentHeight}px`,
-            ...style
-        };
+        const mergedClassName = classNames( 'board', className, {
+            'show-hidden' : showHidden || workingItem
+        });
 
         return connectDropTarget(
             <div
                 className={mergedClassName}
-                style={mergedStyle}>
-                {React.Children.map(children, this.renderBoardItem)}
+                style={style}>
+                <NotifyResize
+                    onResize={this.onBoardResize}
+                    notifyOnMount={true}
+                />
+                {height && width && React.Children.map(children, this.renderBoardItem)}
                 {this.renderPlaceholder()}
             </div>
         ); 
@@ -297,14 +312,14 @@ const boardTarget = {
         this.x = clientOffset.x;
         this.y = clientOffset.y;
 
-        if ( type === BOARD_ITEM ) {
-            const parentNode = findDOMNode( component );
-            const parentBounds = parentNode.getBoundingClientRect();
+        const parentNode = findDOMNode( component );
+        const parentBounds = parentNode.getBoundingClientRect();
 
+        if ( type === BOARD_ITEM ) {
             const x = clientOffset.x - parentBounds.left;
             const y = clientOffset.y - parentBounds.top;
 
-            const nextXY = calculateXY( y, x, item.height, item.width, props.columns, props.rows, props.height, props.width );
+            const nextXY = calculateXY( y, x, item.height, item.width, props.columns, props.rows, parentBounds.height, parentBounds.width );
 
             if ( item.x !== nextXY.x && item.y !== nextXY.y ) {
                 component.onDrag( item.id, nextXY.x, nextXY.y );
@@ -319,8 +334,8 @@ const boardTarget = {
                 maxConstraints
             } = item;
 
-            const rowHeight = props.height / props.rows;
-            const columnWidth = props.width / props.columns;
+            const rowHeight = parentBounds.height / props.rows;
+            const columnWidth = parentBounds.width / props.columns;
 
             const pixelWidth = columnWidth * width;
             const pixelHeight = rowHeight * height;
@@ -340,12 +355,12 @@ const boardTarget = {
             this.slackW += ( pixelWidth + deltaX ) - nextPixelWidth;
             this.slackH += ( pixelHeight + deltaY ) - nextPixelHeight;
 
-            const nextWH = calculateWH( nextPixelHeight, nextPixelWidth, props.columns, props.rows, props.height, props.width, minConstraints, maxConstraints );
+            const nextWH = calculateWH( nextPixelHeight, nextPixelWidth, props.columns, props.rows, parentBounds.height, parentBounds.width, minConstraints, maxConstraints );
             component.onResize( id, nextWH.width, nextWH.height );
         }
     },
 
-    drop : function( props, monitor ) {
+    drop : function() {
         this.x = null;
         this.y = null;
 

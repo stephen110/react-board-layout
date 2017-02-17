@@ -1,9 +1,16 @@
+/* App */
 .app {
     position: relative;
     height: 100%;
     background-color: #fafafa;
 }
 
+.wrapper {
+    position: relative;
+    height: 100%;
+}
+
+/* Cards */
 .card {
     border: 1px solid #cccccc;
     background-color: #ffffff;
@@ -22,7 +29,115 @@
     cursor: move;
 }
 
-.wrapper {
+.card__body {
+    position: relative;
+    height: calc(100% - 40px);
+}
+
+.card__size {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* Carousel Renderer */
+
+.carousel-board-set {
+    overflow: hidden;
     position: relative;
     height: 100%;
 }
+
+.carousel-board-set.single-board {
+    padding-bottom: 0;
+}
+
+.carousel-board-set.single-board .board-thumbnails {
+    display: none;
+}
+
+.carousel-renderer {
+    position: relative;
+    height: 100%;
+    padding: 10px 0 30px 10px;
+}
+
+.carousel-renderer .board {
+    visibility: hidden;
+    transition: height 300ms ease;
+    transition-property: transform;
+}
+
+.carousel-renderer .board.transitioning {
+    visibility: visible;
+}
+
+.carousel-renderer .board.active {
+    visibility: visible;
+    z-index: 0;
+}
+
+.carousel-board-set .board-thumbnails {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 30px;
+    padding: 5px 20px;
+    width: 100%;
+    border-top: 1px solid #cccccc;
+    z-index: 15;
+    background-color: #f4f4f8;
+    transition: all 0.2s ease;
+    text-align: center;
+    box-shadow: 0 -4px 3px -3px rgba( 0, 0, 0, .05 );
+}
+
+.carousel-board-set .board-thumbnail {
+    display: inline-block;
+    text-align: center;
+    height: 20px;
+    width: 80px;
+    line-height: 20px;
+    margin-right: 20px;
+    cursor: pointer;
+    color: #555555;
+}
+
+.carousel-board-set .board-thumbnail:hover {
+    text-decoration: underline;
+}
+
+.carousel-board-set .board-thumbnail.selected {
+    color: #1184CE;
+    text-decoration: none;
+}
+
+.carousel-board-set .board-thumbnail:last-of-type {
+    margin-right: 0;
+}
+
+/* Basic Renderer */
+
+.basic-board-set {
+    position: relative;
+    height: 500px;
+}
+
+.basic-renderer {
+    position: relative;
+    height: 100%;
+}
+
+.basic-renderer .board {
+    visibility: visible;
+    position: relative;
+    display: inline-block;
+    transition: height 300ms ease;
+    transition-property: transform;
+    height: 250px;
+    width: 400px;
+    margin-right: 10px;
+    border: 1px solid #dddddd;
+}
+

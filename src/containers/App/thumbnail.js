@@ -14,7 +14,6 @@ const {
 class BoardThumb extends Component {
 
     static propTypes = {
-        onClick : func.isRequired,
         index : number.isRequired,
         selected : bool.isRequired,
         selectBoard : func.isRequired,
@@ -46,15 +45,16 @@ class BoardThumb extends Component {
     render() {
         const {
             connectDropTarget,
-            onClick,
+            selectBoard,
             selected,
-            name
+            name,
+            index
         } = this.props;
 
         return connectDropTarget(
             <div
                 className={classNames('board-thumbnail', { selected : selected})}
-                onClick={onClick}>
+                onClick={() => selectBoard(index)}>
                 {name}
             </div>
         )

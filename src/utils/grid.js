@@ -10,6 +10,10 @@ export function childrenEqual(a, b) {
     return _.isEqual(React.Children.map(a, c => c.key), React.Children.map(b, c => c.key));
 }
 
+export const getBoard = function( boards, id ) {
+    return boards.find( board => board.id === id );
+};
+
 export const getLayoutItem = function( layout, id ) {
     return layout.find( item => item.id === id );  
 };
@@ -49,7 +53,7 @@ export const removeElement = function( layout, id ) {
 export const addOrUpdateElement = function( layout, layoutItem ) {
     layout = [].concat( layout );
 
-    for ( var i = 0; i < layout.length; i++ ) {
+    for ( let i = 0; i < layout.length; i++ ) {
         if ( layout[ i ].id === layoutItem.id ) {
             layout[ i ] = layoutItem;
             return layout;
@@ -92,17 +96,17 @@ export const shallowEqual = function (objA, objB) {
         return false;
     }
 
-    var keysA = Object.keys(objA);
-    var keysB = Object.keys(objB);
+    let keysA = Object.keys(objA);
+    let keysB = Object.keys(objB);
 
     if (keysA.length !== keysB.length) {
         return false;
     }
 
     // Test for A's keys different from B.
-    var bHasOwnProperty = hasOwnProperty.bind(objB);
+    let bHasOwnProperty = hasOwnProperty.bind(objB);
 
-    for (var i = 0; i < keysA.length; i++) {
+    for (let i = 0; i < keysA.length; i++) {
         if (!bHasOwnProperty(keysA[i]) || objA[keysA[i]] !== objB[keysA[i]]) {
             return false;
         }
