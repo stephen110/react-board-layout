@@ -1,7 +1,7 @@
 
 import React, { Component, PropTypes } from 'react';
 import { findDOMNode } from 'react-dom';
-import { NotifyResize } from 'react-notify-resize';
+import { NotifyResize } from '@zippytech/react-notify-resize';
 import classNames from 'classnames';
 import BoardItem from '../BoardItem';
 import { DropTarget } from 'react-dnd';
@@ -84,27 +84,15 @@ class Board extends Component {
         };
     }
 
-    onDrag( itemId, x, y ) {
+    onDrag( itemId, x, y, height, width ) {
         let {
             layout,
-            setWorkingItem,
-            workingItem
+            setWorkingItem
         } = this.props;
 
-        let layoutItem = getLayoutItem( layout, itemId );
-
-        if ( !layoutItem ) {
-            if ( !workingItem ) {
-                return;
-            }
-
-            // New item to this board
-            layoutItem = workingItem.item;
-        }
-
         const nextLayoutItem = {
-            height : layoutItem.height,
-            width : layoutItem.width,
+            height,
+            width,
             x,
             y
         };
@@ -207,6 +195,10 @@ class Board extends Component {
             commitWorkingItem,
             breakpoints
         } = this.props;
+
+        if ( !child ) {
+            return null;
+        }
 
         const {
             width,
@@ -322,7 +314,7 @@ const boardTarget = {
             const nextXY = calculateXY( y, x, item.height, item.width, props.columns, props.rows, parentBounds.height, parentBounds.width );
 
             if ( item.x !== nextXY.x && item.y !== nextXY.y ) {
-                component.onDrag( item.id, nextXY.x, nextXY.y );
+                component.onDrag( item.id, nextXY.x, nextXY.y, item.height, item.width );
             }
         }
         else if ( type === RESIZE_HANDLE ) {

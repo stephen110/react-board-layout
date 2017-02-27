@@ -1,6 +1,6 @@
 
 import React, { Component, PropTypes } from 'react';
-import { NotifyResize } from 'react-notify-resize';
+import { NotifyResize } from '@zippytech/react-notify-resize';
 import { removeElement, setLayoutItemBounds, addOrUpdateElement, getLayoutItem, getBoard } from '../../utils/grid';
 import connect from '../../utils/connect';
 import classNames from 'classnames';
@@ -14,6 +14,7 @@ const {
     object
 } = PropTypes;
 
+
 const noop = function(){};
 
 class BoardSet extends Component {
@@ -25,6 +26,13 @@ class BoardSet extends Component {
         onBoardLayoutsChange : func,
         onSizeChange : func,
         breakpoints : object
+    };
+
+    static childContextTypes = {
+        setWorkingItem : func,
+        commitWorkingItem : func,
+        updateItemPosition : func,
+        updateItemSize : func
     };
 
     static defaultProps = {
@@ -52,6 +60,15 @@ class BoardSet extends Component {
         this.onUpdateItemPosition = this.onUpdateItemPosition.bind( this );
         this.onUpdateItemSize = this.onUpdateItemSize.bind( this );
         this.onCommitWorkingItem = this.onCommitWorkingItem.bind( this );
+    }
+
+    getChildContext() {
+        return {
+            setWorkingItem : this.onSetWorkingItem,
+            commitWorkingItem : this.onCommitWorkingItem,
+            updateItemPosition : this.onUpdateItemPosition,
+            updateItemSize : this.onUpdateItemSize
+        };
     }
 
     componentWillReceiveProps( nextProps ) {
@@ -198,7 +215,15 @@ class BoardSet extends Component {
         }
 
         if ( !layoutItem ) {
-            return;
+            if ( !workingItem ) {
+                return;
+            }
+
+            layoutItem = {
+                ...workingItem.item
+            };
+
+            delete layoutItem.placeholder;
         }
 
         const nextLayoutItem  = setLayoutItemBounds( layoutItem, nextPosition );

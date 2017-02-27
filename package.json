@@ -2,6 +2,7 @@
   "name": "react-board-layout",
   "version": "0.1.0",
   "private": true,
+  "main": "src/index-dev.js",
   "devDependencies": {
     "react-scripts": "0.7.0",
     "autoprefixer": "^6.4.0",
