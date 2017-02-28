@@ -1,6 +1,12 @@
 
-module.exports.BoardSet  = require( './components/BoardSet' ).default;
-module.exports.Board     = require( './components/Board' ).default;
-module.exports.Constants = require( './constants' );
-module.exports.ReactDnD  = require( 'react-dnd' );
-module.exports.connect   = require( './utils/connect' ).default;
+import BoardSet from './components/BoardSet';
+import Board from './components/Board';
+import * as Constants from './constants';
+import connect from './utils/connect';
+
+export {
+    BoardSet,
+    Board,
+    Constants,
+    connect
+};
