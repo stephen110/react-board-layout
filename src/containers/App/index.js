@@ -3,7 +3,10 @@ import BoardSet from '../../components/BoardSet';
 import BasicRenderer from './basicRenderer';
 import CarouselRenderer from './carouselRenderer';
 import ThumbnailRenderer from './thumbnailRenderer';
+import connect from '../../utils/connect';
 import './styles.css';
+
+const ConnectedBoardSet = connect( BoardSet );
 
 const initialBoardLayouts = [
     {
@@ -88,7 +91,7 @@ class App extends Component {
         return (
             <div className="wrapper">
                 <div className="app">
-                    <BoardSet
+                    <ConnectedBoardSet
                         boardLayouts={boardLayouts}
                         onCreateBoard={this.onCreateBoard}
                         onBoardLayoutsChange={this.onBoardLayoutsChange}
@@ -107,7 +110,7 @@ class App extends Component {
                                 {/*selectBoard={this.onSelectThumbnail}*/}
                                 {/*selectedIndex={selectedIndex}*/}
                             {/*/>*/}
-                    </BoardSet>
+                    </ConnectedBoardSet>
                 </div>
             </div>
         );

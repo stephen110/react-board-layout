@@ -2,7 +2,6 @@
 import React, { Component, PropTypes } from 'react';
 import { NotifyResize } from '@zippytech/react-notify-resize';
 import { removeElement, setLayoutItemBounds, addOrUpdateElement, getLayoutItem, getBoard } from '../../utils/grid';
-import connect from '../../utils/connect';
 import classNames from 'classnames';
 import _ from 'lodash';
 
@@ -17,7 +16,7 @@ const {
 
 const noop = function(){};
 
-class BoardSet extends Component {
+export default class BoardSet extends Component {
 
     static propTypes = {
         maxBoards : number,
@@ -289,6 +288,8 @@ class BoardSet extends Component {
             breakpoints,
             className,
             columns,
+            isDraggable,
+            isResizable,
             rows
         } = this.props;
 
@@ -304,6 +305,8 @@ class BoardSet extends Component {
             showHidden,
             breakpoints,
             maxBoards,
+            isDraggable,
+            isResizable,
             columns,
             rows,
             workingItem,
@@ -331,4 +334,3 @@ class BoardSet extends Component {
 
 }
 
-export default connect( BoardSet );
