@@ -322,12 +322,12 @@ export default class BoardSet extends Component {
                     onResize={this.onResize}
                     notifyOnMount={true}
                 />
-                {height && width ? React.Children.map( children, ( child, index ) => React.cloneElement( child, {
+                {height && width ? React.Children.map( children, ( child, index ) => child ? React.cloneElement( child, {
                         parentHeight : height,
                         parentWidth : width,
                         boardProps,
                         boards : boardLayouts
-                    })) : null}
+                    }) : null ) : null}
             </div>
         );
     }
