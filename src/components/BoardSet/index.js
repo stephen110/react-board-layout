@@ -1,5 +1,6 @@
 
-import React, { Component, PropTypes } from 'react';
+import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 import { NotifyResize } from '@zippytech/react-notify-resize';
 import { removeElement, setLayoutItemBounds, addOrUpdateElement, getLayoutItem, getBoard } from '../../utils/grid';
 import classNames from 'classnames';

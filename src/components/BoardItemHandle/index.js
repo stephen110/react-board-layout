@@ -1,5 +1,6 @@
 
-import React, { PropTypes } from 'react';
+import React from 'react';
+import PropTypes from 'prop-types';
 import { DragSource } from 'react-dnd';
 import { RESIZE_HANDLE } from '../../constants';
 import './styles.css';

@@ -1,4 +1,4 @@
-import React, { Component, PropTypes } from 'react';
+import React from 'react';
 import Board from '../../components/Board';
 import classNames from 'classnames';
 import Card from './card';

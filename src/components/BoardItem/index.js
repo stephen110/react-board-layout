@@ -1,5 +1,6 @@
 
-import React, { Component, PropTypes } from 'react';
+import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 import ResizeHandle from '../BoardItemHandle/index';
 import { setTransform, setTopLeft } from '../../utils/style';
 import { childrenEqual, shallowEqual } from '../../utils/grid';
