@@ -22,7 +22,7 @@ const {
 
 const noop = function(){};
 
-class BoardItem extends Component {
+export class BoardItem extends Component {
 
     static propTypes = {
         // Indentifier
@@ -328,7 +328,7 @@ const collect = function( connect, monitor ) {
     };
 };
 
-export default DragSource(
+export const ConnectedBoardItem = DragSource(
     BOARD_ITEM,
     source,
     collect

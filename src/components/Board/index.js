@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import { findDOMNode } from 'react-dom';
 import { NotifyResize } from '@zippytech/react-notify-resize';
 import classNames from 'classnames';
-import BoardItem from '../BoardItem';
+import { BoardItem, ConnectedBoardItem } from '../BoardItem';
 import { DropTarget } from 'react-dnd';
 import { getLayoutItem, canMoveElement, calculateXY, calculateWH } from '../../utils/grid';
 import { BOARD_ITEM, RESIZE_HANDLE } from '../../constants';
@@ -20,7 +20,7 @@ const {
 
 const noop = function(){};
 
-class Board extends Component {
+export class Board extends Component {
 
     static propTypes = {
         id : string,
@@ -56,6 +56,10 @@ class Board extends Component {
         board : object
     };
 
+    static contextTypes = {
+        dragDropManager : object
+    };
+
     static defaultProps = {
         columns : 12,
         rows    : 12,
@@ -64,7 +68,8 @@ class Board extends Component {
         useCSSTransforms : true,
         updateItemPosition : noop,
         updateItemSize : noop,
-        setWorkingItem : noop
+        setWorkingItem : noop,
+        connectDropTarget : component => component
     };
 
     constructor( props, context ) {
@@ -224,34 +229,39 @@ class Board extends Component {
             layoutItem.isResizable !== false
         );
 
-        return (
-            <BoardItem
-                parentWidth={width}
-                parentHeight={height}
-                rows={rows}
-                columns={columns}
-                cancel={draggableCancel}
-                handle={draggableHandle}
-                isHidden={layoutItem.isHidden}
-                isDraggable={draggable}
-                onDragStop={commitWorkingItem}
-                isResizable={resizable}
-                onResize={this.onResize}
-                useCSSTransforms={useCSSTransforms}
-                width={layoutItem.width}
-                height={layoutItem.height}
-                minHeight={layout.minHeight}
-                maxHeight={layoutItem.maxHeight}
-                minWidth={layoutItem.minWidth}
-                maxWidth={layoutItem.maxWidth}
-                breakpoints={breakpoints}
-                x={layoutItem.x}
-                y={layoutItem.y}
-                id={layoutItem.id}
-                isStatic={layoutItem.isStatic}>
+        const props = {
+            parentWidth: width,
+            parentHeight: height,
+            rows: rows,
+            columns: columns,
+            cancel: draggableCancel,
+            handle: draggableHandle,
+            isHidden: layoutItem.isHidden,
+            isDraggable: draggable,
+            onDragStop: commitWorkingItem,
+            isResizable: resizable,
+            onResize: this.onResize,
+            useCSSTransforms: useCSSTransforms,
+            width: layoutItem.width,
+            height: layoutItem.height,
+            minHeight: layout.minHeight,
+            maxHeight: layoutItem.maxHeight,
+            minWidth: layoutItem.minWidth,
+            maxWidth: layoutItem.maxWidth,
+            breakpoints: breakpoints,
+            x: layoutItem.x,
+            y: layoutItem.y,
+            id: layoutItem.id,
+            isStatic: layoutItem.isStatic
+        };
+
+        return this.context.dragDropManager ?
+            <ConnectedBoardItem {...props}>
                 {child}
-            </BoardItem>
-        );
+            </ConnectedBoardItem> :
+            <BoardItem {...props}>
+                {child}
+            </BoardItem>;
     }
 
     render() {
@@ -370,7 +380,7 @@ const collect = function( connect, monitor ) {
     };
 };
 
-export default DropTarget(
+export const ConnectedBoard = DropTarget(
     [ BOARD_ITEM, RESIZE_HANDLE ],
     boardTarget,
     collect

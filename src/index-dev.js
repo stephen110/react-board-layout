@@ -1,10 +1,11 @@
 
 import BoardSet from './components/BoardSet';
-import Board from './components/Board';
+import { Board, ConnectedBoard } from './components/Board';
 import * as Constants from './constants';
 
 export {
     BoardSet,
     Board,
+    ConnectedBoard,
     Constants
 };
